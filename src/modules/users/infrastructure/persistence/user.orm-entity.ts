@@ -1,0 +1,43 @@
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  Index,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+import { Role } from '../../../../common/constants/role.enum';
+
+@Entity('users')
+@Index(['barbershopId', 'email'], { unique: true })
+export class UserOrmEntity {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @Column({ type: 'uuid', nullable: true })
+  barbershopId: string | null;
+
+  @Column()
+  name: string;
+
+  @Column()
+  email: string;
+
+  @Column()
+  passwordHash: string;
+
+  @Column({ type: 'enum', enum: Role, default: Role.BARBER })
+  role: Role;
+
+  @Column({ default: true })
+  isActive: boolean;
+
+  @Column({ type: 'varchar', nullable: true })
+  currentRefreshTokenHash: string | null;
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
+}
