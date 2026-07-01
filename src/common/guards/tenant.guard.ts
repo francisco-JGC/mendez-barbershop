@@ -4,14 +4,14 @@ import {
   ForbiddenException,
   Injectable,
 } from '@nestjs/common';
+import { Request } from 'express';
 import { Role } from '../constants/role.enum';
-import { AuthenticatedUser } from '../types/authenticated-user.interface';
 
 @Injectable()
 export class TenantGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
-    const request = context.switchToHttp().getRequest();
-    const user: AuthenticatedUser | undefined = request.user;
+    const request = context.switchToHttp().getRequest<Request>();
+    const user = request.user;
 
     if (!user) {
       return false;
@@ -21,7 +21,7 @@ export class TenantGuard implements CanActivate {
       return true;
     }
 
-    const tenantId: string | null = request.tenantId;
+    const tenantId = request.tenantId;
     if (!tenantId || user.barbershopId !== tenantId) {
       throw new ForbiddenException('User does not belong to this tenant');
     }

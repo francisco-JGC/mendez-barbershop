@@ -1,61 +1,41 @@
 import {
-  BadRequestException,
   Inject,
   Injectable,
   NestMiddleware,
   NotFoundException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { NextFunction, Request, Response } from 'express';
-import {
-  BARBERSHOP_REPOSITORY,
-  IBarbershopRepository,
-} from '../../modules/tenants/domain/barbershop.repository';
+import { BARBERSHOP_REPOSITORY } from '../../modules/tenants/domain/barbershop.repository';
+import type { IBarbershopRepository } from '../../modules/tenants/domain/barbershop.repository';
 
-declare module 'express' {
-  interface Request {
-    tenantId: string | null;
-    tenantSubdomain: string | null;
-  }
-}
+export const TENANT_CODE_HEADER = 'x-tenant-code';
 
 @Injectable()
 export class TenantMiddleware implements NestMiddleware {
-  private readonly baseDomain: string;
-
   constructor(
     @Inject(BARBERSHOP_REPOSITORY)
     private readonly barbershopRepository: IBarbershopRepository,
-    private readonly configService: ConfigService,
-  ) {
-    this.baseDomain = this.configService.get<string>('BASE_DOMAIN')!;
-  }
+  ) {}
 
   async use(req: Request, _res: Response, next: NextFunction): Promise<void> {
-    const host = (req.headers.host ?? '').split(':')[0].toLowerCase();
+    const header = req.headers[TENANT_CODE_HEADER];
+    const code = Array.isArray(header) ? header[0] : header;
 
-    if (host === this.baseDomain || host === `www.${this.baseDomain}`) {
+    if (!code) {
+      // No establishment code sent: super_admin context.
       req.tenantId = null;
-      req.tenantSubdomain = null;
       return next();
     }
 
-    const suffix = `.${this.baseDomain}`;
-    if (!host.endsWith(suffix)) {
-      throw new BadRequestException('Unknown host');
-    }
-
-    const subdomain = host.slice(0, -suffix.length);
-    const barbershop = await this.barbershopRepository.findBySubdomain(
-      subdomain,
+    const barbershop = await this.barbershopRepository.findByCode(
+      code.toLowerCase(),
     );
 
     if (!barbershop || !barbershop.isActive) {
-      throw new NotFoundException('Barbershop not found');
+      throw new NotFoundException('Establishment not found');
     }
 
     req.tenantId = barbershop.id;
-    req.tenantSubdomain = subdomain;
     next();
   }
 }
