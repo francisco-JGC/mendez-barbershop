@@ -1,13 +1,10 @@
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
-import {
-  IUserRepository,
-  USER_REPOSITORY,
-} from '../../../users/domain/user.repository';
-import {
-  IPasswordHasher,
-  PASSWORD_HASHER,
-} from '../../../users/domain/password-hasher';
-import { ITokenService, TOKEN_SERVICE } from '../ports/token.service';
+import { USER_REPOSITORY } from '../../../users/domain/user.repository';
+import type { IUserRepository } from '../../../users/domain/user.repository';
+import { PASSWORD_HASHER } from '../../../users/domain/password-hasher';
+import type { IPasswordHasher } from '../../../users/domain/password-hasher';
+import { TOKEN_SERVICE } from '../ports/token.service';
+import type { ITokenService } from '../ports/token.service';
 import { AuthTokensResult } from '../auth-tokens.result';
 
 @Injectable()
@@ -44,9 +41,8 @@ export class RefreshTokenUseCase {
     const accessToken = this.tokenService.signAccessToken(payload);
     const newRefreshToken = this.tokenService.signRefreshToken(payload);
 
-    user.currentRefreshTokenHash = await this.passwordHasher.hash(
-      newRefreshToken,
-    );
+    user.currentRefreshTokenHash =
+      await this.passwordHasher.hash(newRefreshToken);
     await this.userRepository.save(user);
 
     return { accessToken, refreshToken: newRefreshToken };

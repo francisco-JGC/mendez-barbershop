@@ -17,7 +17,7 @@ export class BarbershopOrmEntity {
 
   @Index({ unique: true })
   @Column()
-  subdomain: string;
+  code: string;
 
   @Column({ default: true })
   isActive: boolean;

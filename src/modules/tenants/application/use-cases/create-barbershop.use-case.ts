@@ -12,16 +12,14 @@ export class CreateBarbershopUseCase {
   ) {}
 
   async execute(dto: CreateBarbershopDto): Promise<Barbershop> {
-    const existing = await this.barbershopRepository.findBySubdomain(
-      dto.subdomain,
-    );
+    const existing = await this.barbershopRepository.findByCode(dto.code);
     if (existing) {
-      throw new ConflictException('Subdomain already in use');
+      throw new ConflictException('Code already in use');
     }
 
     return this.barbershopRepository.create({
       name: dto.name,
-      subdomain: dto.subdomain,
+      code: dto.code,
     });
   }
 }

@@ -10,7 +10,7 @@ export class CreateBarbershopDto {
   @IsNotEmpty()
   @MaxLength(63)
   @Matches(/^[a-z0-9-]+$/, {
-    message: 'subdomain must contain only lowercase letters, numbers and hyphens',
+    message: 'code must contain only lowercase letters, numbers and hyphens',
   })
-  subdomain: string;
+  code: string;
 }

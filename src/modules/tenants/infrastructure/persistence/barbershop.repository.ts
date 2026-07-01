@@ -18,7 +18,7 @@ export class BarbershopRepository implements IBarbershopRepository {
 
   async findAll(): Promise<Barbershop[]> {
     const rows = await this.ormRepository.find();
-    return rows.map(BarbershopMapper.toDomain);
+    return rows.map((row) => BarbershopMapper.toDomain(row));
   }
 
   async findById(id: string): Promise<Barbershop | null> {
@@ -26,15 +26,15 @@ export class BarbershopRepository implements IBarbershopRepository {
     return row ? BarbershopMapper.toDomain(row) : null;
   }
 
-  async findBySubdomain(subdomain: string): Promise<Barbershop | null> {
-    const row = await this.ormRepository.findOne({ where: { subdomain } });
+  async findByCode(code: string): Promise<Barbershop | null> {
+    const row = await this.ormRepository.findOne({ where: { code } });
     return row ? BarbershopMapper.toDomain(row) : null;
   }
 
   async create(data: NewBarbershop): Promise<Barbershop> {
     const created = this.ormRepository.create({
       name: data.name,
-      subdomain: data.subdomain,
+      code: data.code,
     });
     const saved = await this.ormRepository.save(created);
     return BarbershopMapper.toDomain(saved);

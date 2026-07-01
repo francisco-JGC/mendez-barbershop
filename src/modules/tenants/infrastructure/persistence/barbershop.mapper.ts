@@ -6,7 +6,7 @@ export class BarbershopMapper {
     return new Barbershop(
       orm.id,
       orm.name,
-      orm.subdomain,
+      orm.code,
       orm.isActive,
       orm.createdAt,
       orm.updatedAt,
@@ -17,7 +17,7 @@ export class BarbershopMapper {
     const orm = new BarbershopOrmEntity();
     orm.id = domain.id;
     orm.name = domain.name;
-    orm.subdomain = domain.subdomain;
+    orm.code = domain.code;
     orm.isActive = domain.isActive;
     return orm;
   }

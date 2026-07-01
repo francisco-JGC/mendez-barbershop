@@ -14,8 +14,11 @@ import { Role } from '../../../../common/constants/role.enum';
 import { CreateBarbershopUseCase } from '../../application/use-cases/create-barbershop.use-case';
 import { ListBarbershopsUseCase } from '../../application/use-cases/list-barbershops.use-case';
 import { SetBarbershopActiveUseCase } from '../../application/use-cases/set-barbershop-active.use-case';
+import { CreateBarbershopAdminUseCase } from '../../application/use-cases/create-barbershop-admin.use-case';
 import { CreateBarbershopDto } from '../../application/dto/create-barbershop.dto';
+import { CreateBarbershopAdminDto } from '../../application/dto/create-barbershop-admin.dto';
 import { ActiveStatusDto } from '../../../../common/dto/active-status.dto';
+import { UserResponseDto } from '../../../users/application/dto/user-response.dto';
 
 @Controller('tenants')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -25,6 +28,7 @@ export class TenantsController {
     private readonly createBarbershop: CreateBarbershopUseCase,
     private readonly listBarbershops: ListBarbershopsUseCase,
     private readonly setBarbershopActive: SetBarbershopActiveUseCase,
+    private readonly createBarbershopAdmin: CreateBarbershopAdminUseCase,
   ) {}
 
   @Post()
@@ -40,5 +44,14 @@ export class TenantsController {
   @Patch(':id/active')
   setActive(@Param('id') id: string, @Body() dto: ActiveStatusDto) {
     return this.setBarbershopActive.execute(id, dto.isActive);
+  }
+
+  @Post(':id/admin')
+  async createAdmin(
+    @Param('id') id: string,
+    @Body() dto: CreateBarbershopAdminDto,
+  ): Promise<UserResponseDto> {
+    const admin = await this.createBarbershopAdmin.execute(id, dto);
+    return UserResponseDto.fromDomain(admin);
   }
 }

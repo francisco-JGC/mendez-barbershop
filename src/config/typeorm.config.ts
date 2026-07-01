@@ -10,7 +10,7 @@ export const buildTypeOrmOptions = (
   username: config.get<string>('DB_USERNAME'),
   password: config.get<string>('DB_PASSWORD'),
   database: config.get<string>('DB_NAME'),
-  entities: [__dirname + '/../**/*.entity{.ts,.js}'],
+  entities: [__dirname + '/../**/*.orm-entity{.ts,.js}'],
   migrations: [__dirname + '/../database/migrations/*{.ts,.js}'],
   synchronize: false,
   migrationsRun: false,

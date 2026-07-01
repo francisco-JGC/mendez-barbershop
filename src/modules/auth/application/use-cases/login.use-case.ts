@@ -43,9 +43,7 @@ export class LoginUseCase {
     const accessToken = this.tokenService.signAccessToken(payload);
     const refreshToken = this.tokenService.signRefreshToken(payload);
 
-    user.currentRefreshTokenHash = await this.passwordHasher.hash(
-      refreshToken,
-    );
+    user.currentRefreshTokenHash = await this.passwordHasher.hash(refreshToken);
     await this.userRepository.save(user);
 
     return { accessToken, refreshToken };

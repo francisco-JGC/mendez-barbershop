@@ -13,12 +13,13 @@ import { TenantGuard } from '../../../../common/guards/tenant.guard';
 import { Roles } from '../../../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../../../common/decorators/current-user.decorator';
 import { Role } from '../../../../common/constants/role.enum';
-import { AuthenticatedUser } from '../../../../common/types/authenticated-user.interface';
+import type { AuthenticatedUser } from '../../../../common/types/authenticated-user.interface';
 import { ActiveStatusDto } from '../../../../common/dto/active-status.dto';
 import { CreateUserUseCase } from '../../application/use-cases/create-user.use-case';
 import { ListUsersUseCase } from '../../application/use-cases/list-users.use-case';
 import { SetUserActiveUseCase } from '../../application/use-cases/set-user-active.use-case';
 import { CreateUserDto } from '../../application/dto/create-user.dto';
+import { UserResponseDto } from '../../application/dto/user-response.dto';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard, TenantGuard, RolesGuard)
@@ -31,21 +32,33 @@ export class UsersController {
   ) {}
 
   @Post()
-  create(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateUserDto) {
-    return this.createUser.execute(user.barbershopId!, dto);
+  async create(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: CreateUserDto,
+  ): Promise<UserResponseDto> {
+    const created = await this.createUser.execute(user.barbershopId!, dto);
+    return UserResponseDto.fromDomain(created);
   }
 
   @Get()
-  findAll(@CurrentUser() user: AuthenticatedUser) {
-    return this.listUsers.execute(user.barbershopId!);
+  async findAll(
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<UserResponseDto[]> {
+    const users = await this.listUsers.execute(user.barbershopId!);
+    return users.map((u) => UserResponseDto.fromDomain(u));
   }
 
   @Patch(':id/active')
-  setActive(
+  async setActive(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
     @Body() dto: ActiveStatusDto,
-  ) {
-    return this.setUserActive.execute(user.barbershopId!, id, dto.isActive);
+  ): Promise<UserResponseDto> {
+    const updated = await this.setUserActive.execute(
+      user.barbershopId!,
+      id,
+      dto.isActive,
+    );
+    return UserResponseDto.fromDomain(updated);
   }
 }

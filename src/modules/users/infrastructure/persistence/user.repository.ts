@@ -33,7 +33,7 @@ export class UserRepository implements IUserRepository {
 
   async findAllByTenant(barbershopId: string): Promise<User[]> {
     const rows = await this.ormRepository.find({ where: { barbershopId } });
-    return rows.map(UserMapper.toDomain);
+    return rows.map((row) => UserMapper.toDomain(row));
   }
 
   async create(data: NewUser): Promise<User> {
@@ -49,9 +49,7 @@ export class UserRepository implements IUserRepository {
   }
 
   async save(user: User): Promise<User> {
-    const saved = await this.ormRepository.save(
-      UserMapper.toPersistence(user),
-    );
+    const saved = await this.ormRepository.save(UserMapper.toPersistence(user));
     return UserMapper.toDomain(saved);
   }
 }

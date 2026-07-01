@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import {
+import type {
   ITokenService,
   TokenPayload,
 } from '../application/ports/token.service';
@@ -16,14 +16,18 @@ export class JwtTokenService implements ITokenService {
   signAccessToken(payload: TokenPayload): string {
     return this.jwtService.sign(payload, {
       secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
-      expiresIn: this.configService.get<string>('JWT_ACCESS_EXPIRES_IN'),
+      expiresIn: this.configService.get<string>(
+        'JWT_ACCESS_EXPIRES_IN',
+      ) as JwtSignOptions['expiresIn'],
     });
   }
 
   signRefreshToken(payload: TokenPayload): string {
     return this.jwtService.sign(payload, {
       secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
-      expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRES_IN'),
+      expiresIn: this.configService.get<string>(
+        'JWT_REFRESH_EXPIRES_IN',
+      ) as JwtSignOptions['expiresIn'],
     });
   }
 
