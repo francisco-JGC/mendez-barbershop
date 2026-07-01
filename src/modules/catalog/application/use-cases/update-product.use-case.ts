@@ -1,4 +1,9 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PRODUCT_REPOSITORY } from '../../domain/product.repository';
 import type { IProductRepository } from '../../domain/product.repository';
 import { Product } from '../../domain/product.entity';
@@ -19,6 +24,19 @@ export class UpdateProductUseCase {
     const product = await this.productRepository.findById(id);
     if (!product || !product.belongsToTenant(barbershopId)) {
       throw new NotFoundException('Product not found');
+    }
+
+    if (dto.barcode !== undefined && dto.barcode !== product.barcode) {
+      if (dto.barcode) {
+        const existing = await this.productRepository.findByBarcode(
+          barbershopId,
+          dto.barcode,
+        );
+        if (existing && existing.id !== product.id) {
+          throw new ConflictException('Barcode already in use for this tenant');
+        }
+      }
+      product.barcode = dto.barcode;
     }
 
     if (dto.name !== undefined) product.name = dto.name;

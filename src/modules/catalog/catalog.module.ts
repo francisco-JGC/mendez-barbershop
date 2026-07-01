@@ -14,6 +14,7 @@ import { UpdateServiceUseCase } from './application/use-cases/update-service.use
 import { CreateProductUseCase } from './application/use-cases/create-product.use-case';
 import { ListProductsUseCase } from './application/use-cases/list-products.use-case';
 import { UpdateProductUseCase } from './application/use-cases/update-product.use-case';
+import { GetProductByBarcodeUseCase } from './application/use-cases/get-product-by-barcode.use-case';
 
 @Module({
   imports: [TypeOrmModule.forFeature([ServiceOrmEntity, ProductOrmEntity])],
@@ -27,6 +28,7 @@ import { UpdateProductUseCase } from './application/use-cases/update-product.use
     CreateProductUseCase,
     ListProductsUseCase,
     UpdateProductUseCase,
+    GetProductByBarcodeUseCase,
   ],
   exports: [SERVICE_REPOSITORY, PRODUCT_REPOSITORY],
 })

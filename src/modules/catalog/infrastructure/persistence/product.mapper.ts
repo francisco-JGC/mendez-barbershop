@@ -7,6 +7,7 @@ export class ProductMapper {
       orm.id,
       orm.barbershopId,
       orm.name,
+      orm.barcode,
       orm.price,
       orm.stock,
       orm.lowStockThreshold,
@@ -21,6 +22,7 @@ export class ProductMapper {
     orm.id = domain.id;
     orm.barbershopId = domain.barbershopId;
     orm.name = domain.name;
+    orm.barcode = domain.barcode;
     orm.price = domain.price;
     orm.stock = domain.stock;
     orm.lowStockThreshold = domain.lowStockThreshold;

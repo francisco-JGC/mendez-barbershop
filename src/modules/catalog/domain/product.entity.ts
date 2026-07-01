@@ -3,6 +3,7 @@ export class Product {
     public readonly id: string,
     public readonly barbershopId: string,
     public name: string,
+    public barcode: string | null,
     public price: string,
     public stock: number,
     public lowStockThreshold: number,

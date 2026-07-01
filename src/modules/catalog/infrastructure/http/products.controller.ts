@@ -17,6 +17,7 @@ import type { AuthenticatedUser } from '../../../../common/types/authenticated-u
 import { CreateProductUseCase } from '../../application/use-cases/create-product.use-case';
 import { ListProductsUseCase } from '../../application/use-cases/list-products.use-case';
 import { UpdateProductUseCase } from '../../application/use-cases/update-product.use-case';
+import { GetProductByBarcodeUseCase } from '../../application/use-cases/get-product-by-barcode.use-case';
 import { CreateProductDto } from '../../application/dto/create-product.dto';
 import { UpdateProductDto } from '../../application/dto/update-product.dto';
 
@@ -27,11 +28,20 @@ export class ProductsController {
     private readonly createProduct: CreateProductUseCase,
     private readonly listProducts: ListProductsUseCase,
     private readonly updateProduct: UpdateProductUseCase,
+    private readonly getProductByBarcode: GetProductByBarcodeUseCase,
   ) {}
 
   @Get()
   findAll(@CurrentUser() user: AuthenticatedUser) {
     return this.listProducts.execute(user.barbershopId!);
+  }
+
+  @Get('by-barcode/:barcode')
+  findByBarcode(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('barcode') barcode: string,
+  ) {
+    return this.getProductByBarcode.execute(user.barbershopId!, barcode);
   }
 
   @Post()

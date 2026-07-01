@@ -9,6 +9,7 @@ import {
 
 @Entity('products')
 @Index(['barbershopId'])
+@Index(['barbershopId', 'barcode'], { unique: true })
 export class ProductOrmEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -18,6 +19,9 @@ export class ProductOrmEntity {
 
   @Column()
   name: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  barcode: string | null;
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   price: string;

@@ -34,6 +34,16 @@ export class ProductRepository implements IProductRepository {
     return rows.map((row) => ProductMapper.toDomain(row));
   }
 
+  async findByBarcode(
+    barbershopId: string,
+    barcode: string,
+  ): Promise<Product | null> {
+    const row = await this.ormRepository.findOne({
+      where: { barbershopId, barcode },
+    });
+    return row ? ProductMapper.toDomain(row) : null;
+  }
+
   async create(data: NewProduct): Promise<Product> {
     const created = this.ormRepository.create(data);
     const saved = await this.ormRepository.save(created);
