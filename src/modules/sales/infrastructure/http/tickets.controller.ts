@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../../../../common/guards/jwt-auth.guard';
 import { TenantGuard } from '../../../../common/guards/tenant.guard';
 import { RolesGuard } from '../../../../common/guards/roles.guard';
@@ -9,6 +9,7 @@ import type { AuthenticatedUser } from '../../../../common/types/authenticated-u
 import { CreateTicketUseCase } from '../../application/use-cases/create-ticket.use-case';
 import { ListTicketsUseCase } from '../../application/use-cases/list-tickets.use-case';
 import { CreateTicketDto } from '../../application/dto/create-ticket.dto';
+import { ListTicketsQueryDto } from '../../application/dto/list-tickets-query.dto';
 
 @Controller('tickets')
 @UseGuards(JwtAuthGuard, TenantGuard, RolesGuard)
@@ -25,7 +26,10 @@ export class TicketsController {
   }
 
   @Get()
-  findAll(@CurrentUser() user: AuthenticatedUser) {
-    return this.listTickets.execute(user);
+  findAll(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query() query: ListTicketsQueryDto,
+  ) {
+    return this.listTickets.execute(user, query.page, query.limit);
   }
 }

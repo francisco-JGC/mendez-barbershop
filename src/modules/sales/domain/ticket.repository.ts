@@ -24,6 +24,16 @@ export interface TicketDateRange {
   to?: Date;
 }
 
+export interface TicketPagination {
+  skip: number;
+  take: number;
+}
+
+export interface PaginatedTickets {
+  items: Ticket[];
+  total: number;
+}
+
 export interface ITicketRepository {
   /**
    * Persists the ticket and its items, decrementing product stock atomically
@@ -34,11 +44,13 @@ export interface ITicketRepository {
   findById(id: string): Promise<Ticket | null>;
   findAllByTenant(
     barbershopId: string,
+    pagination: TicketPagination,
     range?: TicketDateRange,
-  ): Promise<Ticket[]>;
+  ): Promise<PaginatedTickets>;
   findAllByBarber(
     barbershopId: string,
     barberId: string,
+    pagination: TicketPagination,
     range?: TicketDateRange,
-  ): Promise<Ticket[]>;
+  ): Promise<PaginatedTickets>;
 }

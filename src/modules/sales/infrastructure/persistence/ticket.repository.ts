@@ -8,7 +8,9 @@ import { Between, DataSource, Repository } from 'typeorm';
 import {
   CreateTicketInput,
   ITicketRepository,
+  PaginatedTickets,
   TicketDateRange,
+  TicketPagination,
 } from '../../domain/ticket.repository';
 import { Ticket } from '../../domain/ticket.entity';
 import { TicketItemType } from '../../domain/ticket-item.entity';
@@ -85,9 +87,10 @@ export class TicketRepository implements ITicketRepository {
 
   async findAllByTenant(
     barbershopId: string,
+    pagination: TicketPagination,
     range?: TicketDateRange,
-  ): Promise<Ticket[]> {
-    const rows = await this.ormRepository.find({
+  ): Promise<PaginatedTickets> {
+    const [rows, total] = await this.ormRepository.findAndCount({
       where: {
         barbershopId,
         ...(range?.from && range?.to
@@ -96,16 +99,19 @@ export class TicketRepository implements ITicketRepository {
       },
       relations: { items: true },
       order: { createdAt: 'DESC' },
+      skip: pagination.skip,
+      take: pagination.take,
     });
-    return rows.map((row) => TicketMapper.toDomain(row));
+    return { items: rows.map((row) => TicketMapper.toDomain(row)), total };
   }
 
   async findAllByBarber(
     barbershopId: string,
     barberId: string,
+    pagination: TicketPagination,
     range?: TicketDateRange,
-  ): Promise<Ticket[]> {
-    const rows = await this.ormRepository.find({
+  ): Promise<PaginatedTickets> {
+    const [rows, total] = await this.ormRepository.findAndCount({
       where: {
         barbershopId,
         barberId,
@@ -115,7 +121,9 @@ export class TicketRepository implements ITicketRepository {
       },
       relations: { items: true },
       order: { createdAt: 'DESC' },
+      skip: pagination.skip,
+      take: pagination.take,
     });
-    return rows.map((row) => TicketMapper.toDomain(row));
+    return { items: rows.map((row) => TicketMapper.toDomain(row)), total };
   }
 }
