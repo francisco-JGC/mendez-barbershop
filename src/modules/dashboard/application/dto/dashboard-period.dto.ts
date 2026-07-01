@@ -3,6 +3,6 @@ import type { DashboardPeriod } from '../date-range.util';
 
 export class DashboardPeriodDto {
   @IsOptional()
-  @IsIn(['day', 'month'])
+  @IsIn(['day', 'yesterday', 'week', 'month'])
   period?: DashboardPeriod = 'day';
 }

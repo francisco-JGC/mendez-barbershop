@@ -10,6 +10,10 @@ export interface NewStation {
 export interface IStationRepository {
   findAllByTenant(barbershopId: string): Promise<Station[]>;
   findById(id: string): Promise<Station | null>;
+  findByCurrentBarberId(
+    barbershopId: string,
+    barberId: string,
+  ): Promise<Station | null>;
   create(data: NewStation): Promise<Station>;
   save(station: Station): Promise<Station>;
 }

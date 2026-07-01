@@ -26,6 +26,16 @@ export class StationRepository implements IStationRepository {
     return row ? StationMapper.toDomain(row) : null;
   }
 
+  async findByCurrentBarberId(
+    barbershopId: string,
+    barberId: string,
+  ): Promise<Station | null> {
+    const row = await this.ormRepository.findOne({
+      where: { barbershopId, currentBarberId: barberId },
+    });
+    return row ? StationMapper.toDomain(row) : null;
+  }
+
   async create(data: NewStation): Promise<Station> {
     const created = this.ormRepository.create(data);
     const saved = await this.ormRepository.save(created);

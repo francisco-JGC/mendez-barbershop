@@ -28,10 +28,6 @@ export class CreateTicketDto {
   @IsUUID()
   barberId?: string;
 
-  @IsOptional()
-  @IsUUID()
-  stationId?: string;
-
   @IsArray()
   @ArrayMinSize(1)
   @ValidateNested({ each: true })

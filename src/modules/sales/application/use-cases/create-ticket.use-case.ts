@@ -16,6 +16,8 @@ import { SERVICE_REPOSITORY } from '../../../catalog/domain/service.repository';
 import type { IServiceRepository } from '../../../catalog/domain/service.repository';
 import { PRODUCT_REPOSITORY } from '../../../catalog/domain/product.repository';
 import type { IProductRepository } from '../../../catalog/domain/product.repository';
+import { STATION_REPOSITORY } from '../../../stations/domain/station.repository';
+import type { IStationRepository } from '../../../stations/domain/station.repository';
 import { Role } from '../../../../common/constants/role.enum';
 import type { AuthenticatedUser } from '../../../../common/types/authenticated-user.interface';
 import { CreateTicketDto } from '../dto/create-ticket.dto';
@@ -29,6 +31,8 @@ export class CreateTicketUseCase {
     private readonly serviceRepository: IServiceRepository,
     @Inject(PRODUCT_REPOSITORY)
     private readonly productRepository: IProductRepository,
+    @Inject(STATION_REPOSITORY)
+    private readonly stationRepository: IStationRepository,
   ) {}
 
   async execute(
@@ -45,9 +49,10 @@ export class CreateTicketUseCase {
       .filter((item) => item.itemType === TicketItemType.PRODUCT)
       .map((item) => item.itemId);
 
-    const [services, products] = await Promise.all([
+    const [services, products, station] = await Promise.all([
       this.serviceRepository.findByIds(barbershopId, serviceIds),
       this.productRepository.findByIds(barbershopId, productIds),
+      this.stationRepository.findByCurrentBarberId(barbershopId, barberId),
     ]);
 
     const { items, total } = this.priceTicketItems(
@@ -63,7 +68,10 @@ export class CreateTicketUseCase {
     return this.ticketRepository.create({
       barbershopId,
       barberId,
-      stationId: dto.stationId ?? null,
+      // The barber's station at the moment of the sale, recorded as a
+      // snapshot: if the barber's station assignment changes later, past
+      // tickets must keep reflecting where the sale actually happened.
+      stationId: station?.id ?? null,
       total: total.toFixed(2),
       items,
     });

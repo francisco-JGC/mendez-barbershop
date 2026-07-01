@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CatalogModule } from '../catalog/catalog.module';
+import { StationsModule } from '../stations/stations.module';
 import { TicketOrmEntity } from './infrastructure/persistence/ticket.orm-entity';
 import { TicketItemOrmEntity } from './infrastructure/persistence/ticket-item.orm-entity';
 import { TicketRepository } from './infrastructure/persistence/ticket.repository';
@@ -13,6 +14,7 @@ import { ListTicketsUseCase } from './application/use-cases/list-tickets.use-cas
   imports: [
     TypeOrmModule.forFeature([TicketOrmEntity, TicketItemOrmEntity]),
     CatalogModule,
+    StationsModule,
   ],
   controllers: [TicketsController],
   providers: [
