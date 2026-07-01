@@ -9,6 +9,8 @@ import { UsersController } from './infrastructure/http/users.controller';
 import { CreateUserUseCase } from './application/use-cases/create-user.use-case';
 import { ListUsersUseCase } from './application/use-cases/list-users.use-case';
 import { SetUserActiveUseCase } from './application/use-cases/set-user-active.use-case';
+import { UpdateUserUseCase } from './application/use-cases/update-user.use-case';
+import { ResetUserPasswordUseCase } from './application/use-cases/reset-user-password.use-case';
 
 @Module({
   imports: [TypeOrmModule.forFeature([UserOrmEntity])],
@@ -19,6 +21,8 @@ import { SetUserActiveUseCase } from './application/use-cases/set-user-active.us
     CreateUserUseCase,
     ListUsersUseCase,
     SetUserActiveUseCase,
+    UpdateUserUseCase,
+    ResetUserPasswordUseCase,
   ],
   exports: [USER_REPOSITORY, PASSWORD_HASHER],
 })

@@ -18,7 +18,11 @@ import { ActiveStatusDto } from '../../../../common/dto/active-status.dto';
 import { CreateUserUseCase } from '../../application/use-cases/create-user.use-case';
 import { ListUsersUseCase } from '../../application/use-cases/list-users.use-case';
 import { SetUserActiveUseCase } from '../../application/use-cases/set-user-active.use-case';
+import { UpdateUserUseCase } from '../../application/use-cases/update-user.use-case';
+import { ResetUserPasswordUseCase } from '../../application/use-cases/reset-user-password.use-case';
 import { CreateUserDto } from '../../application/dto/create-user.dto';
+import { UpdateUserDto } from '../../application/dto/update-user.dto';
+import { ResetPasswordDto } from '../../application/dto/reset-password.dto';
 import { UserResponseDto } from '../../application/dto/user-response.dto';
 
 @Controller('users')
@@ -29,6 +33,8 @@ export class UsersController {
     private readonly createUser: CreateUserUseCase,
     private readonly listUsers: ListUsersUseCase,
     private readonly setUserActive: SetUserActiveUseCase,
+    private readonly updateUser: UpdateUserUseCase,
+    private readonly resetUserPassword: ResetUserPasswordUseCase,
   ) {}
 
   @Post()
@@ -58,6 +64,34 @@ export class UsersController {
       user.barbershopId!,
       id,
       dto.isActive,
+    );
+    return UserResponseDto.fromDomain(updated);
+  }
+
+  @Patch(':id')
+  async update(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() dto: UpdateUserDto,
+  ): Promise<UserResponseDto> {
+    const updated = await this.updateUser.execute(
+      user.barbershopId!,
+      id,
+      dto,
+    );
+    return UserResponseDto.fromDomain(updated);
+  }
+
+  @Patch(':id/password')
+  async resetPassword(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() dto: ResetPasswordDto,
+  ): Promise<UserResponseDto> {
+    const updated = await this.resetUserPassword.execute(
+      user.barbershopId!,
+      id,
+      dto.password,
     );
     return UserResponseDto.fromDomain(updated);
   }
