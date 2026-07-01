@@ -48,6 +48,7 @@ export class CreateBarbershopAdminUseCase {
       barbershopId,
       name: dto.name,
       email: dto.email,
+      username: null,
       passwordHash,
       role: Role.ADMIN,
     });

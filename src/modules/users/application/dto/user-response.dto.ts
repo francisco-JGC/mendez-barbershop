@@ -5,7 +5,8 @@ export class UserResponseDto {
   id: string;
   barbershopId: string | null;
   name: string;
-  email: string;
+  email: string | null;
+  username: string | null;
   role: Role;
   isActive: boolean;
   createdAt: Date;
@@ -17,6 +18,7 @@ export class UserResponseDto {
     dto.barbershopId = user.barbershopId;
     dto.name = user.name;
     dto.email = user.email;
+    dto.username = user.username;
     dto.role = user.role;
     dto.isActive = user.isActive;
     dto.createdAt = user.createdAt;

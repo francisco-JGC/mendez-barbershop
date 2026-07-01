@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Inject,
@@ -24,12 +25,29 @@ export class CreateUserUseCase {
       throw new ForbiddenException('Cannot create a super_admin user here');
     }
 
-    const existing = await this.userRepository.findByEmail(
-      barbershopId,
-      dto.email,
-    );
-    if (existing) {
-      throw new ConflictException('Email already in use for this tenant');
+    if (dto.role === Role.BARBER) {
+      if (!dto.username) {
+        throw new BadRequestException('Barbers must have a username');
+      }
+      const existing = await this.userRepository.findByUsername(
+        barbershopId,
+        dto.username,
+      );
+      if (existing) {
+        throw new ConflictException('Username already in use for this tenant');
+      }
+    } else {
+      // Admin (SUPER_ADMIN was already rejected above).
+      if (!dto.email) {
+        throw new BadRequestException('Admins must have an email');
+      }
+      const existing = await this.userRepository.findByEmail(
+        barbershopId,
+        dto.email,
+      );
+      if (existing) {
+        throw new ConflictException('Email already in use for this tenant');
+      }
     }
 
     const passwordHash = await this.passwordHasher.hash(dto.password);
@@ -37,7 +55,8 @@ export class CreateUserUseCase {
     return this.userRepository.create({
       barbershopId,
       name: dto.name,
-      email: dto.email,
+      email: dto.role === Role.BARBER ? null : (dto.email ?? null),
+      username: dto.role === Role.BARBER ? (dto.username ?? null) : null,
       passwordHash,
       role: dto.role,
     });

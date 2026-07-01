@@ -20,7 +20,10 @@ export class LoginUseCase {
     tenantId: string | null,
     dto: LoginDto,
   ): Promise<AuthTokensResult> {
-    const user = await this.userRepository.findByEmail(tenantId, dto.email);
+    const user = await this.userRepository.findByIdentifier(
+      tenantId,
+      dto.identifier,
+    );
     if (!user || !user.isActive) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -36,6 +39,7 @@ export class LoginUseCase {
     const payload = {
       sub: user.id,
       email: user.email,
+      username: user.username,
       role: user.role,
       barbershopId: user.barbershopId,
     };

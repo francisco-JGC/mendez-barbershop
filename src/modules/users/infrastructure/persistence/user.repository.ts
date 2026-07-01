@@ -31,6 +31,31 @@ export class UserRepository implements IUserRepository {
     return row ? UserMapper.toDomain(row) : null;
   }
 
+  async findByUsername(
+    barbershopId: string | null,
+    username: string,
+  ): Promise<User | null> {
+    const row = await this.ormRepository.findOne({
+      where: {
+        username,
+        barbershopId: barbershopId ?? IsNull(),
+      },
+    });
+    return row ? UserMapper.toDomain(row) : null;
+  }
+
+  async findByIdentifier(
+    barbershopId: string | null,
+    identifier: string,
+  ): Promise<User | null> {
+    // Callers don't know whether the identifier is an email or a username —
+    // we probe email first (more specific due to the '@'), then username.
+    if (identifier.includes('@')) {
+      return this.findByEmail(barbershopId, identifier);
+    }
+    return this.findByUsername(barbershopId, identifier);
+  }
+
   async findAllByTenant(barbershopId: string): Promise<User[]> {
     const rows = await this.ormRepository.find({ where: { barbershopId } });
     return rows.map((row) => UserMapper.toDomain(row));
@@ -41,6 +66,7 @@ export class UserRepository implements IUserRepository {
       barbershopId: data.barbershopId,
       name: data.name,
       email: data.email,
+      username: data.username,
       passwordHash: data.passwordHash,
       role: data.role,
     });

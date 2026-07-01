@@ -10,6 +10,7 @@ import { Role } from '../../../../common/constants/role.enum';
 
 @Entity('users')
 @Index(['barbershopId', 'email'], { unique: true })
+@Index(['barbershopId', 'username'], { unique: true })
 export class UserOrmEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -20,8 +21,11 @@ export class UserOrmEntity {
   @Column()
   name: string;
 
-  @Column()
-  email: string;
+  @Column({ type: 'varchar', nullable: true })
+  email: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  username: string | null;
 
   @Column()
   passwordHash: string;

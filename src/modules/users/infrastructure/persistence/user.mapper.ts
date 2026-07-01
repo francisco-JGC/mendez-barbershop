@@ -8,6 +8,7 @@ export class UserMapper {
       orm.barbershopId,
       orm.name,
       orm.email,
+      orm.username,
       orm.passwordHash,
       orm.role,
       orm.isActive,
@@ -23,6 +24,7 @@ export class UserMapper {
     orm.barbershopId = domain.barbershopId;
     orm.name = domain.name;
     orm.email = domain.email;
+    orm.username = domain.username;
     orm.passwordHash = domain.passwordHash;
     orm.role = domain.role;
     orm.isActive = domain.isActive;

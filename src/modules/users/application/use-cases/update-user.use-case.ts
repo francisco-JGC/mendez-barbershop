@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Inject,
@@ -33,6 +34,17 @@ export class UpdateUserUseCase {
       throw new ForbiddenException('Cannot assign the super_admin role here');
     }
 
+    // Barbers cannot have an email set, and admins cannot have a username set —
+    // rejecting the mismatched fields explicitly is clearer than silently
+    // dropping them and lets callers correct the request.
+    const finalRole = dto.role ?? user.role;
+    if (finalRole === Role.BARBER && dto.email !== undefined) {
+      throw new BadRequestException('Barbers use a username, not email');
+    }
+    if (finalRole !== Role.BARBER && dto.username !== undefined) {
+      throw new BadRequestException('Admins use email, not a username');
+    }
+
     if (dto.email && dto.email !== user.email) {
       const existing = await this.userRepository.findByEmail(
         barbershopId,
@@ -42,6 +54,17 @@ export class UpdateUserUseCase {
         throw new ConflictException('Email already in use for this tenant');
       }
       user.email = dto.email;
+    }
+
+    if (dto.username && dto.username !== user.username) {
+      const existing = await this.userRepository.findByUsername(
+        barbershopId,
+        dto.username,
+      );
+      if (existing && existing.id !== user.id) {
+        throw new ConflictException('Username already in use for this tenant');
+      }
+      user.username = dto.username;
     }
 
     if (dto.name) {
