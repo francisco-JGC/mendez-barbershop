@@ -12,10 +12,10 @@ export class AuthController {
   constructor(
     private readonly loginUseCase: LoginUseCase,
     private readonly refreshTokenUseCase: RefreshTokenUseCase,
-  ) {}
+  ) { }
 
   @Public()
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  // @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('login')
   login(@TenantId() tenantId: string | null, @Body() dto: LoginDto) {
     return this.loginUseCase.execute(tenantId, dto);

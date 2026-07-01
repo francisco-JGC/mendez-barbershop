@@ -18,8 +18,8 @@ export class TicketOrmEntity {
   @Column({ type: 'uuid' })
   barbershopId: string;
 
-  @Column({ type: 'uuid' })
-  barberId: string;
+  @Column({ type: 'uuid', nullable: true })
+  barberId: string | null;
 
   @Column({ type: 'uuid', nullable: true })
   stationId: string | null;

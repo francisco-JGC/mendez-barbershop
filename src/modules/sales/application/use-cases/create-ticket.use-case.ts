@@ -40,7 +40,10 @@ export class CreateTicketUseCase {
     dto: CreateTicketDto,
   ): Promise<Ticket> {
     const barbershopId = currentUser.barbershopId!;
-    const barberId = this.resolveBarberId(currentUser, dto.barberId);
+    const hasService = dto.items.some(
+      (item) => item.itemType === TicketItemType.SERVICE,
+    );
+    const barberId = this.resolveBarberId(currentUser, dto.barberId, hasService);
 
     const serviceIds = dto.items
       .filter((item) => item.itemType === TicketItemType.SERVICE)
@@ -52,7 +55,9 @@ export class CreateTicketUseCase {
     const [services, products, station] = await Promise.all([
       this.serviceRepository.findByIds(barbershopId, serviceIds),
       this.productRepository.findByIds(barbershopId, productIds),
-      this.stationRepository.findByCurrentBarberId(barbershopId, barberId),
+      barberId
+        ? this.stationRepository.findByCurrentBarberId(barbershopId, barberId)
+        : Promise.resolve(null),
     ]);
 
     const { items, total } = this.priceTicketItems(
@@ -116,18 +121,24 @@ export class CreateTicketUseCase {
 
   private resolveBarberId(
     currentUser: AuthenticatedUser,
-    requestedBarberId?: string,
-  ): string {
+    requestedBarberId: string | undefined,
+    hasService: boolean,
+  ): string | null {
     if (currentUser.role === Role.BARBER) {
       return currentUser.userId;
     }
 
-    if (!requestedBarberId) {
-      throw new BadRequestException('barberId is required for this role');
-    }
-
     if (currentUser.role !== Role.ADMIN) {
       throw new ForbiddenException('Not allowed to create tickets');
+    }
+
+    if (!requestedBarberId) {
+      if (hasService) {
+        throw new BadRequestException(
+          'barberId is required when the ticket includes a service',
+        );
+      }
+      return null;
     }
 
     return requestedBarberId;

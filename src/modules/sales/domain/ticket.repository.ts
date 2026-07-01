@@ -13,7 +13,7 @@ export interface CreateTicketItemInput {
 
 export interface CreateTicketInput {
   barbershopId: string;
-  barberId: string;
+  barberId: string | null;
   stationId: string | null;
   total: string;
   items: CreateTicketItemInput[];

@@ -64,32 +64,29 @@ export class TypeOrmDashboardQueryService implements IDashboardQueryService {
     from: Date,
     to: Date,
   ) {
-    const cutsCount = await this.ticketItemRepo
+    // A barber's revenue only reflects the services they performed —
+    // product sales rung up under their name (eg. a walk-in retail sale)
+    // don't count toward their personal stats.
+    const row = await this.ticketItemRepo
       .createQueryBuilder('item')
       .innerJoin('item.ticket', 'ticket')
+      .select('COUNT(*)', 'cutsCount')
+      .addSelect('COALESCE(SUM(item.subtotal), 0)', 'revenue')
       .where('ticket.barbershopId = :barbershopId', { barbershopId })
       .andWhere('ticket.barberId = :barberId', { barberId })
       .andWhere('item.itemType = :itemType', {
         itemType: TicketItemType.SERVICE,
       })
       .andWhere('ticket.createdAt BETWEEN :from AND :to', { from, to })
-      .getCount();
-
-    const totalRow = await this.ticketRepo
-      .createQueryBuilder('ticket')
-      .select('COALESCE(SUM(ticket.total), 0)', 'total')
-      .where('ticket.barbershopId = :barbershopId', { barbershopId })
-      .andWhere('ticket.barberId = :barberId', { barberId })
-      .andWhere('ticket.createdAt BETWEEN :from AND :to', { from, to })
-      .getRawOne<{ total: string }>();
+      .getRawOne<{ cutsCount: string; revenue: string }>();
 
     const station = await this.stationRepo.findOne({
       where: { barbershopId, currentBarberId: barberId },
     });
 
     return {
-      cutsCount,
-      totalRevenue: Number(totalRow?.total ?? 0).toFixed(2),
+      cutsCount: Number(row?.cutsCount ?? 0),
+      totalRevenue: Number(row?.revenue ?? 0).toFixed(2),
       stationNumber: station?.number ?? null,
     };
   }
@@ -117,13 +114,19 @@ export class TypeOrmDashboardQueryService implements IDashboardQueryService {
     from: Date,
     to: Date,
   ): Promise<BarberRankingEntry[]> {
-    const rows = await this.ticketRepo
-      .createQueryBuilder('ticket')
+    // Ranking is based on services performed, not on product sales that
+    // happened to be rung up under a barber's ticket.
+    const rows = await this.ticketItemRepo
+      .createQueryBuilder('item')
+      .innerJoin('item.ticket', 'ticket')
       .innerJoin(UserOrmEntity, 'barber', 'barber.id = ticket.barberId')
       .select('ticket.barberId', 'barberId')
       .addSelect('barber.name', 'barberName')
-      .addSelect('SUM(ticket.total)', 'revenue')
+      .addSelect('SUM(item.subtotal)', 'revenue')
       .where('ticket.barbershopId = :barbershopId', { barbershopId })
+      .andWhere('item.itemType = :itemType', {
+        itemType: TicketItemType.SERVICE,
+      })
       .andWhere('ticket.createdAt BETWEEN :from AND :to', { from, to })
       .groupBy('ticket.barberId')
       .addGroupBy('barber.name')

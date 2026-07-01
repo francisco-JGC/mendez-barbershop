@@ -4,7 +4,7 @@ export class Ticket {
   constructor(
     public readonly id: string,
     public readonly barbershopId: string,
-    public readonly barberId: string,
+    public readonly barberId: string | null,
     public readonly stationId: string | null,
     public readonly total: string,
     public readonly items: TicketItem[],
