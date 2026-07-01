@@ -6,7 +6,7 @@ import {
   BarberRankingEntry,
   IDashboardQueryService,
   LowStockProductEntry,
-  TopServiceEntry,
+  ServiceBreakdownEntry,
 } from '../application/ports/dashboard-query.service';
 import { TicketOrmEntity } from '../../sales/infrastructure/persistence/ticket.orm-entity';
 import { TicketItemOrmEntity } from '../../sales/infrastructure/persistence/ticket-item.orm-entity';
@@ -39,13 +39,13 @@ export class TypeOrmDashboardQueryService implements IDashboardQueryService {
       servicesRevenue,
       productsRevenue,
       barberRanking,
-      topService,
+      serviceBreakdown,
       lowStockProducts,
     ] = await Promise.all([
       this.sumByItemType(barbershopId, from, to, TicketItemType.SERVICE),
       this.sumByItemType(barbershopId, from, to, TicketItemType.PRODUCT),
       this.getBarberRanking(barbershopId, from, to),
-      this.getTopService(barbershopId, from, to),
+      this.getServiceBreakdown(barbershopId, from, to),
       this.getLowStockProducts(barbershopId),
     ]);
 
@@ -60,7 +60,7 @@ export class TypeOrmDashboardQueryService implements IDashboardQueryService {
       totalRevenue: (servicesRevenue + productsRevenue).toFixed(2),
       totalCommissions: totalCommissions.toFixed(2),
       barberRanking,
-      topService,
+      serviceBreakdown,
       lowStockProducts,
     };
   }
@@ -74,22 +74,24 @@ export class TypeOrmDashboardQueryService implements IDashboardQueryService {
     // A barber's revenue only reflects the services they performed —
     // product sales rung up under their name (eg. a walk-in retail sale)
     // don't count toward their personal stats.
-    const row = await this.ticketItemRepo
-      .createQueryBuilder('item')
-      .innerJoin('item.ticket', 'ticket')
-      .select('COUNT(*)', 'cutsCount')
-      .addSelect('COALESCE(SUM(item.subtotal), 0)', 'revenue')
-      .where('ticket.barbershopId = :barbershopId', { barbershopId })
-      .andWhere('ticket.barberId = :barberId', { barberId })
-      .andWhere('item.itemType = :itemType', {
-        itemType: TicketItemType.SERVICE,
-      })
-      .andWhere('ticket.createdAt BETWEEN :from AND :to', { from, to })
-      .getRawOne<{ cutsCount: string; revenue: string }>();
-
-    const station = await this.stationRepo.findOne({
-      where: { barbershopId, currentBarberId: barberId },
-    });
+    const [row, serviceBreakdown, station] = await Promise.all([
+      this.ticketItemRepo
+        .createQueryBuilder('item')
+        .innerJoin('item.ticket', 'ticket')
+        .select('COUNT(*)', 'cutsCount')
+        .addSelect('COALESCE(SUM(item.subtotal), 0)', 'revenue')
+        .where('ticket.barbershopId = :barbershopId', { barbershopId })
+        .andWhere('ticket.barberId = :barberId', { barberId })
+        .andWhere('item.itemType = :itemType', {
+          itemType: TicketItemType.SERVICE,
+        })
+        .andWhere('ticket.createdAt BETWEEN :from AND :to', { from, to })
+        .getRawOne<{ cutsCount: string; revenue: string }>(),
+      this.getServiceBreakdown(barbershopId, from, to, barberId),
+      this.stationRepo.findOne({
+        where: { barbershopId, currentBarberId: barberId },
+      }),
+    ]);
 
     const totalRevenue = Number(row?.revenue ?? 0);
     return {
@@ -97,6 +99,7 @@ export class TypeOrmDashboardQueryService implements IDashboardQueryService {
       totalRevenue: totalRevenue.toFixed(2),
       commission: (totalRevenue * BARBER_COMMISSION_RATE).toFixed(2),
       stationNumber: station?.number ?? null,
+      serviceBreakdown,
     };
   }
 
@@ -131,6 +134,7 @@ export class TypeOrmDashboardQueryService implements IDashboardQueryService {
       .innerJoin(UserOrmEntity, 'barber', 'barber.id = ticket.barberId')
       .select('ticket.barberId', 'barberId')
       .addSelect('barber.name', 'barberName')
+      .addSelect('COUNT(*)', 'cutsCount')
       .addSelect('SUM(item.subtotal)', 'revenue')
       .where('ticket.barbershopId = :barbershopId', { barbershopId })
       .andWhere('item.itemType = :itemType', {
@@ -140,31 +144,38 @@ export class TypeOrmDashboardQueryService implements IDashboardQueryService {
       .groupBy('ticket.barberId')
       .addGroupBy('barber.name')
       .orderBy('revenue', 'DESC')
-      .getRawMany<{ barberId: string; barberName: string; revenue: string }>();
+      .getRawMany<{
+        barberId: string;
+        barberName: string;
+        cutsCount: string;
+        revenue: string;
+      }>();
 
     return rows.map((row) => {
       const revenue = Number(row.revenue);
       return {
         barberId: row.barberId,
         barberName: row.barberName,
+        cutsCount: Number(row.cutsCount),
         revenue: revenue.toFixed(2),
         commission: (revenue * BARBER_COMMISSION_RATE).toFixed(2),
       };
     });
   }
 
-  private async getTopService(
+  private async getServiceBreakdown(
     barbershopId: string,
     from: Date,
     to: Date,
-  ): Promise<TopServiceEntry | null> {
-    const row = await this.ticketItemRepo
+    barberId?: string,
+  ): Promise<ServiceBreakdownEntry[]> {
+    const query = this.ticketItemRepo
       .createQueryBuilder('item')
       .innerJoin('item.ticket', 'ticket')
       .innerJoin(ServiceOrmEntity, 'service', 'service.id = item.itemId')
       .select('item.itemId', 'serviceId')
       .addSelect('service.name', 'serviceName')
-      .addSelect('COUNT(*)', 'count')
+      .addSelect('SUM(item.quantity)', 'count')
       .where('ticket.barbershopId = :barbershopId', { barbershopId })
       .andWhere('item.itemType = :itemType', {
         itemType: TicketItemType.SERVICE,
@@ -172,17 +183,23 @@ export class TypeOrmDashboardQueryService implements IDashboardQueryService {
       .andWhere('ticket.createdAt BETWEEN :from AND :to', { from, to })
       .groupBy('item.itemId')
       .addGroupBy('service.name')
-      .orderBy('count', 'DESC')
-      .limit(1)
-      .getRawOne<{ serviceId: string; serviceName: string; count: string }>();
+      .orderBy('count', 'DESC');
 
-    if (!row) return null;
+    if (barberId) {
+      query.andWhere('ticket.barberId = :barberId', { barberId });
+    }
 
-    return {
+    const rows = await query.getRawMany<{
+      serviceId: string;
+      serviceName: string;
+      count: string;
+    }>();
+
+    return rows.map((row) => ({
       serviceId: row.serviceId,
       serviceName: row.serviceName,
       count: Number(row.count),
-    };
+    }));
   }
 
   private async getLowStockProducts(
