@@ -35,9 +35,9 @@ export class UserOrmEntity {
   @Column({ type: 'varchar', nullable: true })
   currentRefreshTokenHash: string | null;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt: Date;
 }

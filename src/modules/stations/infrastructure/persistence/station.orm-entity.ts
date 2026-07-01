@@ -30,9 +30,9 @@ export class StationOrmEntity {
   @Column({ type: 'uuid', nullable: true })
   currentBarberId: string | null;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt: Date;
 }

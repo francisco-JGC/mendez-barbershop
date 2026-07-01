@@ -1,0 +1,1 @@
+export const BARBER_COMMISSION_RATE = 0.5;

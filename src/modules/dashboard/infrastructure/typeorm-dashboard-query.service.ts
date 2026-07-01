@@ -15,6 +15,7 @@ import { ServiceOrmEntity } from '../../catalog/infrastructure/persistence/servi
 import { UserOrmEntity } from '../../users/infrastructure/persistence/user.orm-entity';
 import { StationOrmEntity } from '../../stations/infrastructure/persistence/station.orm-entity';
 import { TicketItemType } from '../../sales/domain/ticket-item.entity';
+import { BARBER_COMMISSION_RATE } from '../../../common/constants/commission';
 
 @Injectable()
 export class TypeOrmDashboardQueryService implements IDashboardQueryService {
@@ -48,10 +49,16 @@ export class TypeOrmDashboardQueryService implements IDashboardQueryService {
       this.getLowStockProducts(barbershopId),
     ]);
 
+    const totalCommissions = barberRanking.reduce(
+      (sum, entry) => sum + Number(entry.commission),
+      0,
+    );
+
     return {
       servicesRevenue: servicesRevenue.toFixed(2),
       productsRevenue: productsRevenue.toFixed(2),
       totalRevenue: (servicesRevenue + productsRevenue).toFixed(2),
+      totalCommissions: totalCommissions.toFixed(2),
       barberRanking,
       topService,
       lowStockProducts,
@@ -84,9 +91,11 @@ export class TypeOrmDashboardQueryService implements IDashboardQueryService {
       where: { barbershopId, currentBarberId: barberId },
     });
 
+    const totalRevenue = Number(row?.revenue ?? 0);
     return {
       cutsCount: Number(row?.cutsCount ?? 0),
-      totalRevenue: Number(row?.revenue ?? 0).toFixed(2),
+      totalRevenue: totalRevenue.toFixed(2),
+      commission: (totalRevenue * BARBER_COMMISSION_RATE).toFixed(2),
       stationNumber: station?.number ?? null,
     };
   }
@@ -133,11 +142,15 @@ export class TypeOrmDashboardQueryService implements IDashboardQueryService {
       .orderBy('revenue', 'DESC')
       .getRawMany<{ barberId: string; barberName: string; revenue: string }>();
 
-    return rows.map((row) => ({
-      barberId: row.barberId,
-      barberName: row.barberName,
-      revenue: Number(row.revenue).toFixed(2),
-    }));
+    return rows.map((row) => {
+      const revenue = Number(row.revenue);
+      return {
+        barberId: row.barberId,
+        barberName: row.barberName,
+        revenue: revenue.toFixed(2),
+        commission: (revenue * BARBER_COMMISSION_RATE).toFixed(2),
+      };
+    });
   }
 
   private async getTopService(

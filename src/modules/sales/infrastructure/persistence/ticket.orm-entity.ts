@@ -32,6 +32,6 @@ export class TicketOrmEntity {
   })
   items: TicketItemOrmEntity[];
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 }
