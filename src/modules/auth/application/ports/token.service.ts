@@ -4,6 +4,7 @@ export const TOKEN_SERVICE = Symbol('TOKEN_SERVICE');
 
 export interface TokenPayload {
   sub: string;
+  name: string;
   email: string | null;
   username: string | null;
   role: Role;

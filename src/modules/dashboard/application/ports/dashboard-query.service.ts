@@ -3,6 +3,7 @@ export const DASHBOARD_QUERY_SERVICE = Symbol('DASHBOARD_QUERY_SERVICE');
 export interface BarberRankingEntry {
   barberId: string;
   barberName: string;
+  cutsCount: number;
   revenue: string;
   commission: string;
 }

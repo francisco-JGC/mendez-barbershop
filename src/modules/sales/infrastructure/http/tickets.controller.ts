@@ -30,6 +30,6 @@ export class TicketsController {
     @CurrentUser() user: AuthenticatedUser,
     @Query() query: ListTicketsQueryDto,
   ) {
-    return this.listTickets.execute(user, query.page, query.limit);
+    return this.listTickets.execute(user, query.page, query.limit, query.barberId);
   }
 }

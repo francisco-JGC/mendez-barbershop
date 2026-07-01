@@ -33,6 +33,7 @@ export class RefreshTokenUseCase {
 
     const payload = {
       sub: user.id,
+      name: user.name,
       email: user.email,
       username: user.username,
       role: user.role,

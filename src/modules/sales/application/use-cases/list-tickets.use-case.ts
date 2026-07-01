@@ -15,11 +15,19 @@ export class ListTicketsUseCase {
     currentUser: AuthenticatedUser,
     page = 1,
     limit = 20,
+    barberId?: string,
   ): Promise<PaginatedTickets> {
     const barbershopId = currentUser.barbershopId!;
     const pagination = { skip: (page - 1) * limit, take: limit };
 
     if (currentUser.role === Role.ADMIN) {
+      if (barberId) {
+        return this.ticketRepository.findAllByBarber(
+          barbershopId,
+          barberId,
+          pagination,
+        );
+      }
       return this.ticketRepository.findAllByTenant(barbershopId, pagination);
     }
 
