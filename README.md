@@ -1,98 +1,95 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Mendez Barbershop — Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+API multitenant para gestión de barberías (catálogo, personal/sillas, ventas/tickets, dashboards) construida con NestJS, TypeORM y PostgreSQL, siguiendo arquitectura DDD (domain / application / infrastructure) y principios SOLID.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Arquitectura
 
-## Description
+- **Multitenant por código de establecimiento**: cada barbería (`Barbershop`) tiene un código único (`code`, ej. `mendez`). El cliente lo envía en el header `X-Tenant-Code` en cada request; `TenantMiddleware` lo resuelve antes de que llegue a cualquier controller. Si no se envía el header, la request queda en contexto `super_admin` (sin tenant).
+- **Capas por módulo** (`src/modules/<contexto>/`):
+  - `domain/` — entidades de negocio (clases planas, sin TypeORM) e interfaces de repositorio (puertos).
+  - `application/` — casos de uso (una clase por acción) y DTOs.
+  - `infrastructure/persistence/` — entidades TypeORM + implementación del repositorio (adaptador). Es la única capa acoplada al ORM; cambiarlo no debería afectar `domain` ni `application`.
+  - `infrastructure/http/` — controllers, que solo orquestan casos de uso.
+- **Seguridad**: JWT (access 15m + refresh 7d con rotación y hash en DB), bcrypt, `helmet`, rate limiting (`@nestjs/throttler`), `ValidationPipe` global, guards de tenant y rol.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Requisitos
 
-## Project setup
+- Node.js 20+
+- PostgreSQL accesible (host/usuario/password/db)
+
+## Setup
+
+1. Copiar `.env.example` a `.env` y completar con tus credenciales de PostgreSQL y los secretos JWT:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Genera secretos JWT con:
+
+   ```bash
+   node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
+   ```
+
+2. Instalar dependencias:
+
+   ```bash
+   npm install
+   ```
+
+3. Crear la base de datos (si no existe) y correr las migraciones:
+
+   ```bash
+   npm run migration:run
+   ```
+
+4. Crear el primer usuario `super_admin` (administra el alta de barberías). Puedes pasar los datos por argumento:
+
+   ```bash
+   npm run seed:super-admin -- admin@tusistema.com "contraseñaSegura123" "Nombre Admin"
+   ```
+
+   O definir `SUPER_ADMIN_EMAIL` / `SUPER_ADMIN_PASSWORD` / `SUPER_ADMIN_NAME` (opcional) en tu `.env` y correr el script sin argumentos:
+
+   ```bash
+   npm run seed:super-admin
+   ```
+
+   Los argumentos de línea de comandos, si se pasan, tienen prioridad sobre las variables de entorno.
+
+5. Levantar el servidor:
+
+   ```bash
+   npm run start:dev
+   ```
+
+## Flujo multitenant
+
+- El `super_admin` se loguea sin enviar el header `X-Tenant-Code` y usa `POST /api/tenants` para crear barberías (cada una con su `code` único, ej. `mendez`).
+- Cada barbería creada necesita su propio admin: `POST /api/tenants/:id/admin` (solo super_admin) crea el primer admin de esa barbería.
+- Los usuarios (admin/barbero) de una barbería se loguean enviando `X-Tenant-Code: <code>` en el header (`POST /api/auth/login`); el JWT resultante queda atado a ese `barbershopId` y es rechazado si se usa con un código de tenant distinto.
+
+## Migraciones
 
 ```bash
-$ npm install
+npm run migration:generate -- src/database/migrations/NombreDescriptivo
+npm run migration:run
+npm run migration:revert
 ```
 
-## Compile and run the project
+## Endpoints principales
 
-```bash
-# development
-$ npm run start
+| Recurso | Rutas | Rol |
+|---|---|---|
+| Tenants | `POST/GET /api/tenants`, `PATCH /api/tenants/:id/active` | super_admin |
+| Auth | `POST /api/auth/login`, `POST /api/auth/refresh` | público |
+| Users | `POST/GET /api/users`, `PATCH /api/users/:id/active` | admin |
+| Services | `GET /api/services`, `POST/PATCH ...` | admin (lectura: admin+barbero) |
+| Products | `GET /api/products`, `POST/PATCH ...` | admin (lectura: admin+barbero) |
+| Stations | `GET /api/stations`, `POST /api/stations`, `PATCH /api/stations/:id/assign\|release` | admin |
+| Tickets | `POST/GET /api/tickets` | admin, barbero |
+| Dashboard | `GET /api/dashboard/admin`, `GET /api/dashboard/barber` | admin / barbero respectivamente |
 
-# watch mode
-$ npm run start:dev
+## Notas de seguridad pendientes de revisión
 
-# production mode
-$ npm run start:prod
-```
-
-## Run tests
-
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
-```
-
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+- `multer` (dependencia transitiva de `@nestjs/platform-express`) tiene advisories de DoS conocidos; no se usa upload de archivos todavía, pero revisar antes de añadir esa funcionalidad (`npm audit`).

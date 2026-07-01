@@ -11,6 +11,10 @@ import { TenantMiddleware } from './common/middleware/tenant.middleware';
 import { TenantsModule } from './modules/tenants/tenants.module';
 import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { CatalogModule } from './modules/catalog/catalog.module';
+import { StationsModule } from './modules/stations/stations.module';
+import { SalesModule } from './modules/sales/sales.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -26,6 +30,10 @@ import { AuthModule } from './modules/auth/auth.module';
     TenantsModule,
     UsersModule,
     AuthModule,
+    CatalogModule,
+    StationsModule,
+    SalesModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
