@@ -11,6 +11,7 @@ import { JwtAuthGuard } from '../../../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../../common/guards/roles.guard';
 import { TenantGuard } from '../../../../common/guards/tenant.guard';
 import { Roles } from '../../../../common/decorators/roles.decorator';
+import { Public } from '../../../../common/decorators/public.decorator';
 import { CurrentUser } from '../../../../common/decorators/current-user.decorator';
 import { Role } from '../../../../common/constants/role.enum';
 import type { AuthenticatedUser } from '../../../../common/types/authenticated-user.interface';
@@ -20,6 +21,7 @@ import { SetBarbershopActiveUseCase } from '../../application/use-cases/set-barb
 import { CreateBarbershopAdminUseCase } from '../../application/use-cases/create-barbershop-admin.use-case';
 import { UpdateBarbershopUseCase } from '../../application/use-cases/update-barbershop.use-case';
 import { GetCurrentBarbershopUseCase } from '../../application/use-cases/get-current-barbershop.use-case';
+import { LookupBarbershopUseCase } from '../../application/use-cases/lookup-barbershop.use-case';
 import { ListUsersUseCase } from '../../../users/application/use-cases/list-users.use-case';
 import { UpdateUserUseCase } from '../../../users/application/use-cases/update-user.use-case';
 import { SetUserActiveUseCase } from '../../../users/application/use-cases/set-user-active.use-case';
@@ -47,7 +49,18 @@ export class TenantsController {
     private readonly updateUser: UpdateUserUseCase,
     private readonly setUserActive: SetUserActiveUseCase,
     private readonly resetUserPassword: ResetUserPasswordUseCase,
+    private readonly lookupBarbershop: LookupBarbershopUseCase,
   ) {}
+
+  // Public — used by the login page to show the tenant's brand before the
+  // user submits credentials. Only exposes non-sensitive fields (name, logo,
+  // isActive) to prevent enumeration of tenant internals.
+  @Get('lookup/:code')
+  @Public()
+  @Roles()
+  lookup(@Param('code') code: string) {
+    return this.lookupBarbershop.execute(code);
+  }
 
   // Overrides the class-level SUPER_ADMIN restriction so any user in the
   // tenant can read their barbershop and the admin can rename it.

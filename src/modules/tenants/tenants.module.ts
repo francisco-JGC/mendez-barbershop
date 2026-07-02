@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from '../users/users.module';
+import { SettingsModule } from '../settings/settings.module';
 import { BarbershopOrmEntity } from './infrastructure/persistence/barbershop.orm-entity';
 import { BarbershopRepository } from './infrastructure/persistence/barbershop.repository';
 import { BARBERSHOP_REPOSITORY } from './domain/barbershop.repository';
@@ -11,9 +12,14 @@ import { SetBarbershopActiveUseCase } from './application/use-cases/set-barbersh
 import { CreateBarbershopAdminUseCase } from './application/use-cases/create-barbershop-admin.use-case';
 import { UpdateBarbershopUseCase } from './application/use-cases/update-barbershop.use-case';
 import { GetCurrentBarbershopUseCase } from './application/use-cases/get-current-barbershop.use-case';
+import { LookupBarbershopUseCase } from './application/use-cases/lookup-barbershop.use-case';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([BarbershopOrmEntity]), UsersModule],
+  imports: [
+    TypeOrmModule.forFeature([BarbershopOrmEntity]),
+    UsersModule,
+    SettingsModule,
+  ],
   controllers: [TenantsController],
   providers: [
     { provide: BARBERSHOP_REPOSITORY, useClass: BarbershopRepository },
@@ -23,6 +29,7 @@ import { GetCurrentBarbershopUseCase } from './application/use-cases/get-current
     CreateBarbershopAdminUseCase,
     UpdateBarbershopUseCase,
     GetCurrentBarbershopUseCase,
+    LookupBarbershopUseCase,
   ],
   exports: [BARBERSHOP_REPOSITORY],
 })
