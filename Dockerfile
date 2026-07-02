@@ -10,7 +10,7 @@ RUN npm ci --include=dev
 
 # Copy source and compile TypeScript -> dist/
 COPY . .
-RUN npm run build && echo "=== BUILD OUTPUT ===" && ls -la /app/dist && test -f /app/dist/main.js || (echo "ERROR: dist/main.js missing" && exit 1)
+RUN npm run build && test -f /app/dist/main.js
 
 # -------- Runtime --------
 FROM node:22-alpine AS runtime
