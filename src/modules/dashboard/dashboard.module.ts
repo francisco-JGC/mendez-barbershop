@@ -11,6 +11,7 @@ import { TypeOrmDashboardQueryService } from './infrastructure/typeorm-dashboard
 import { DashboardController } from './infrastructure/http/dashboard.controller';
 import { GetAdminDashboardUseCase } from './application/use-cases/get-admin-dashboard.use-case';
 import { GetBarberDashboardUseCase } from './application/use-cases/get-barber-dashboard.use-case';
+import { SettingsModule } from '../settings/settings.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { GetBarberDashboardUseCase } from './application/use-cases/get-barber-da
       UserOrmEntity,
       StationOrmEntity,
     ]),
+    SettingsModule,
   ],
   controllers: [DashboardController],
   providers: [

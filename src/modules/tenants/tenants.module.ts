@@ -9,6 +9,8 @@ import { CreateBarbershopUseCase } from './application/use-cases/create-barbersh
 import { ListBarbershopsUseCase } from './application/use-cases/list-barbershops.use-case';
 import { SetBarbershopActiveUseCase } from './application/use-cases/set-barbershop-active.use-case';
 import { CreateBarbershopAdminUseCase } from './application/use-cases/create-barbershop-admin.use-case';
+import { UpdateBarbershopUseCase } from './application/use-cases/update-barbershop.use-case';
+import { GetCurrentBarbershopUseCase } from './application/use-cases/get-current-barbershop.use-case';
 
 @Module({
   imports: [TypeOrmModule.forFeature([BarbershopOrmEntity]), UsersModule],
@@ -19,6 +21,8 @@ import { CreateBarbershopAdminUseCase } from './application/use-cases/create-bar
     ListBarbershopsUseCase,
     SetBarbershopActiveUseCase,
     CreateBarbershopAdminUseCase,
+    UpdateBarbershopUseCase,
+    GetCurrentBarbershopUseCase,
   ],
   exports: [BARBERSHOP_REPOSITORY],
 })

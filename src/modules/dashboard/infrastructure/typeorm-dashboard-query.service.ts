@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
@@ -15,7 +15,8 @@ import { ServiceOrmEntity } from '../../catalog/infrastructure/persistence/servi
 import { UserOrmEntity } from '../../users/infrastructure/persistence/user.orm-entity';
 import { StationOrmEntity } from '../../stations/infrastructure/persistence/station.orm-entity';
 import { TicketItemType } from '../../sales/domain/ticket-item.entity';
-import { BARBER_COMMISSION_RATE } from '../../../common/constants/commission';
+import { BARBERSHOP_SETTINGS_REPOSITORY } from '../../settings/domain/barbershop-settings.repository';
+import type { IBarbershopSettingsRepository } from '../../settings/domain/barbershop-settings.repository';
 
 @Injectable()
 export class TypeOrmDashboardQueryService implements IDashboardQueryService {
@@ -28,6 +29,8 @@ export class TypeOrmDashboardQueryService implements IDashboardQueryService {
     private readonly productRepo: Repository<ProductOrmEntity>,
     @InjectRepository(StationOrmEntity)
     private readonly stationRepo: Repository<StationOrmEntity>,
+    @Inject(BARBERSHOP_SETTINGS_REPOSITORY)
+    private readonly settingsRepository: IBarbershopSettingsRepository,
   ) {}
 
   async getAdminSummary(
@@ -35,6 +38,7 @@ export class TypeOrmDashboardQueryService implements IDashboardQueryService {
     from: Date,
     to: Date,
   ): Promise<AdminDashboardSummary> {
+    const commissionRate = await this.getCommissionRate(barbershopId);
     const [
       servicesRevenue,
       productsRevenue,
@@ -44,7 +48,7 @@ export class TypeOrmDashboardQueryService implements IDashboardQueryService {
     ] = await Promise.all([
       this.sumByItemType(barbershopId, from, to, TicketItemType.SERVICE),
       this.sumByItemType(barbershopId, from, to, TicketItemType.PRODUCT),
-      this.getBarberRanking(barbershopId, from, to),
+      this.getBarberRanking(barbershopId, from, to, commissionRate),
       this.getServiceBreakdown(barbershopId, from, to),
       this.getLowStockProducts(barbershopId),
     ]);
@@ -74,7 +78,7 @@ export class TypeOrmDashboardQueryService implements IDashboardQueryService {
     // A barber's revenue only reflects the services they performed —
     // product sales rung up under their name (eg. a walk-in retail sale)
     // don't count toward their personal stats.
-    const [row, serviceBreakdown, station] = await Promise.all([
+    const [row, serviceBreakdown, station, commissionRate] = await Promise.all([
       this.ticketItemRepo
         .createQueryBuilder('item')
         .innerJoin('item.ticket', 'ticket')
@@ -91,16 +95,22 @@ export class TypeOrmDashboardQueryService implements IDashboardQueryService {
       this.stationRepo.findOne({
         where: { barbershopId, currentBarberId: barberId },
       }),
+      this.getCommissionRate(barbershopId),
     ]);
 
     const totalRevenue = Number(row?.revenue ?? 0);
     return {
       cutsCount: Number(row?.cutsCount ?? 0),
       totalRevenue: totalRevenue.toFixed(2),
-      commission: (totalRevenue * BARBER_COMMISSION_RATE).toFixed(2),
+      commission: (totalRevenue * commissionRate).toFixed(2),
       stationNumber: station?.number ?? null,
       serviceBreakdown,
     };
+  }
+
+  private async getCommissionRate(barbershopId: string): Promise<number> {
+    const settings = await this.settingsRepository.findOrCreate(barbershopId);
+    return Number(settings.commissionRate);
   }
 
   private async sumByItemType(
@@ -125,6 +135,7 @@ export class TypeOrmDashboardQueryService implements IDashboardQueryService {
     barbershopId: string,
     from: Date,
     to: Date,
+    commissionRate: number,
   ): Promise<BarberRankingEntry[]> {
     // Ranking is based on services performed, not on product sales that
     // happened to be rung up under a barber's ticket.
@@ -158,7 +169,7 @@ export class TypeOrmDashboardQueryService implements IDashboardQueryService {
         barberName: row.barberName,
         cutsCount: Number(row.cutsCount),
         revenue: revenue.toFixed(2),
-        commission: (revenue * BARBER_COMMISSION_RATE).toFixed(2),
+        commission: (revenue * commissionRate).toFixed(2),
       };
     });
   }
