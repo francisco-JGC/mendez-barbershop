@@ -19,6 +19,11 @@ export class BarbershopSettingsOrmEntity {
   @Column({ type: 'varchar', length: 200, default: 'Gracias por su visita' })
   receiptFooter: string;
 
+  // Data URL of the logo (e.g. "data:image/png;base64,..."). Stored as TEXT
+  // because base64-encoded small logos can exceed varchar length limits.
+  @Column({ type: 'text', nullable: true })
+  logo: string | null;
+
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 

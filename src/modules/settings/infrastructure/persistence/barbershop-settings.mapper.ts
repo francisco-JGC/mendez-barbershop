@@ -7,6 +7,7 @@ export class BarbershopSettingsMapper {
       orm.barbershopId,
       orm.commissionRate,
       orm.receiptFooter,
+      orm.logo,
       orm.createdAt,
       orm.updatedAt,
     );

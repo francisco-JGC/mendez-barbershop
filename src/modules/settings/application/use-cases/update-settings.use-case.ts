@@ -21,6 +21,7 @@ export class UpdateSettingsUseCase {
           ? dto.commissionRate.toFixed(4)
           : undefined,
       receiptFooter: dto.receiptFooter,
+      logo: dto.logo,
     });
   }
 }

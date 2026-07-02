@@ -5,6 +5,7 @@ export const BARBERSHOP_SETTINGS_REPOSITORY = Symbol('BARBERSHOP_SETTINGS_REPOSI
 export interface UpdateBarbershopSettings {
   commissionRate?: string;
   receiptFooter?: string;
+  logo?: string | null;
 }
 
 export interface IBarbershopSettingsRepository {
