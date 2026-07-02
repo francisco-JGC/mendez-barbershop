@@ -16,6 +16,14 @@ async function bootstrap() {
     }),
   );
 
+  // Comma-separated list so Vercel preview URLs (e.g. per-branch deployments)
+  // can be added without redeploying. In dev we allow anything for convenience.
+  const corsOrigin = process.env.FRONTEND_URL?.split(',').map((s) => s.trim());
+  app.enableCors({
+    origin: corsOrigin && corsOrigin.length > 0 ? corsOrigin : true,
+    credentials: true,
+  });
+
   const port = process.env.PORT ?? 3000;
   await app.listen(port);
 }
