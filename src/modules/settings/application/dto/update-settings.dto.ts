@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsNumber,
   IsOptional,
   IsString,
@@ -34,4 +35,8 @@ export class UpdateSettingsDto {
     message: 'logo must be a PNG or JPEG data URL',
   })
   logo?: string | null;
+
+  @IsOptional()
+  @IsBoolean()
+  printBarbershopName?: boolean;
 }

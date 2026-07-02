@@ -6,6 +6,7 @@ export interface UpdateBarbershopSettings {
   commissionRate?: string;
   receiptFooter?: string;
   logo?: string | null;
+  printBarbershopName?: boolean;
 }
 
 export interface IBarbershopSettingsRepository {

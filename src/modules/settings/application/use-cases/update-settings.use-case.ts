@@ -22,6 +22,7 @@ export class UpdateSettingsUseCase {
           : undefined,
       receiptFooter: dto.receiptFooter,
       logo: dto.logo,
+      printBarbershopName: dto.printBarbershopName,
     });
   }
 }
