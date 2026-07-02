@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsNumberString,
   IsOptional,
   IsString,
@@ -14,4 +15,8 @@ export class UpdateServiceDto {
   @IsOptional()
   @IsNumberString()
   price?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 }

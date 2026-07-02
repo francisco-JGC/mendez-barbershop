@@ -23,6 +23,7 @@ export class UpdateServiceUseCase {
 
     if (dto.name !== undefined) service.name = dto.name;
     if (dto.price !== undefined) service.price = dto.price;
+    if (dto.isActive !== undefined) service.isActive = dto.isActive;
 
     return this.serviceRepository.save(service);
   }

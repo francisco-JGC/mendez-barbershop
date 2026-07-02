@@ -44,6 +44,7 @@ export class UpdateProductUseCase {
     if (dto.stock !== undefined) product.stock = dto.stock;
     if (dto.lowStockThreshold !== undefined)
       product.lowStockThreshold = dto.lowStockThreshold;
+    if (dto.isActive !== undefined) product.isActive = dto.isActive;
 
     return this.productRepository.save(product);
   }

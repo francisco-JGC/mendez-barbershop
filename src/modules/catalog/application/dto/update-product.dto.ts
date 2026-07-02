@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsInt,
   IsNumberString,
   IsOptional,
@@ -38,4 +39,8 @@ export class UpdateProductDto {
   @IsInt()
   @Min(0)
   lowStockThreshold?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 }
