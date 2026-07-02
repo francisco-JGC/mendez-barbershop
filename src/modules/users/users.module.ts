@@ -24,6 +24,13 @@ import { ResetUserPasswordUseCase } from './application/use-cases/reset-user-pas
     UpdateUserUseCase,
     ResetUserPasswordUseCase,
   ],
-  exports: [USER_REPOSITORY, PASSWORD_HASHER],
+  exports: [
+    USER_REPOSITORY,
+    PASSWORD_HASHER,
+    ListUsersUseCase,
+    SetUserActiveUseCase,
+    UpdateUserUseCase,
+    ResetUserPasswordUseCase,
+  ],
 })
 export class UsersModule {}

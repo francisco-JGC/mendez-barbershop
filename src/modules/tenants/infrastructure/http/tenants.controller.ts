@@ -20,6 +20,12 @@ import { SetBarbershopActiveUseCase } from '../../application/use-cases/set-barb
 import { CreateBarbershopAdminUseCase } from '../../application/use-cases/create-barbershop-admin.use-case';
 import { UpdateBarbershopUseCase } from '../../application/use-cases/update-barbershop.use-case';
 import { GetCurrentBarbershopUseCase } from '../../application/use-cases/get-current-barbershop.use-case';
+import { ListUsersUseCase } from '../../../users/application/use-cases/list-users.use-case';
+import { UpdateUserUseCase } from '../../../users/application/use-cases/update-user.use-case';
+import { SetUserActiveUseCase } from '../../../users/application/use-cases/set-user-active.use-case';
+import { ResetUserPasswordUseCase } from '../../../users/application/use-cases/reset-user-password.use-case';
+import { UpdateUserDto } from '../../../users/application/dto/update-user.dto';
+import { ResetPasswordDto } from '../../../users/application/dto/reset-password.dto';
 import { CreateBarbershopDto } from '../../application/dto/create-barbershop.dto';
 import { CreateBarbershopAdminDto } from '../../application/dto/create-barbershop-admin.dto';
 import { UpdateBarbershopDto } from '../../application/dto/update-barbershop.dto';
@@ -37,6 +43,10 @@ export class TenantsController {
     private readonly createBarbershopAdmin: CreateBarbershopAdminUseCase,
     private readonly updateBarbershop: UpdateBarbershopUseCase,
     private readonly getCurrentBarbershop: GetCurrentBarbershopUseCase,
+    private readonly listUsers: ListUsersUseCase,
+    private readonly updateUser: UpdateUserUseCase,
+    private readonly setUserActive: SetUserActiveUseCase,
+    private readonly resetUserPassword: ResetUserPasswordUseCase,
   ) {}
 
   // Overrides the class-level SUPER_ADMIN restriction so any user in the
@@ -68,6 +78,16 @@ export class TenantsController {
     return this.listBarbershops.execute();
   }
 
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.getCurrentBarbershop.execute(id);
+  }
+
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() dto: UpdateBarbershopDto) {
+    return this.updateBarbershop.execute(id, dto);
+  }
+
   @Patch(':id/active')
   setActive(@Param('id') id: string, @Body() dto: ActiveStatusDto) {
     return this.setBarbershopActive.execute(id, dto.isActive);
@@ -80,5 +100,43 @@ export class TenantsController {
   ): Promise<UserResponseDto> {
     const admin = await this.createBarbershopAdmin.execute(id, dto);
     return UserResponseDto.fromDomain(admin);
+  }
+
+  @Get(':id/admins')
+  async listAdmins(@Param('id') id: string): Promise<UserResponseDto[]> {
+    const users = await this.listUsers.execute(id);
+    return users
+      .filter((u) => u.role === Role.ADMIN)
+      .map((u) => UserResponseDto.fromDomain(u));
+  }
+
+  @Patch(':id/admins/:userId')
+  async updateAdmin(
+    @Param('id') id: string,
+    @Param('userId') userId: string,
+    @Body() dto: UpdateUserDto,
+  ): Promise<UserResponseDto> {
+    const user = await this.updateUser.execute(id, userId, dto);
+    return UserResponseDto.fromDomain(user);
+  }
+
+  @Patch(':id/admins/:userId/active')
+  async setAdminActive(
+    @Param('id') id: string,
+    @Param('userId') userId: string,
+    @Body() dto: ActiveStatusDto,
+  ): Promise<UserResponseDto> {
+    const user = await this.setUserActive.execute(id, userId, dto.isActive);
+    return UserResponseDto.fromDomain(user);
+  }
+
+  @Patch(':id/admins/:userId/password')
+  async resetAdminPassword(
+    @Param('id') id: string,
+    @Param('userId') userId: string,
+    @Body() dto: ResetPasswordDto,
+  ): Promise<UserResponseDto> {
+    const user = await this.resetUserPassword.execute(id, userId, dto.password);
+    return UserResponseDto.fromDomain(user);
   }
 }
