@@ -1,10 +1,17 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { json, urlencoded } from 'express';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Default Express body-parser cap (100KB) is too low for base64-encoded
+  // logos in settings — bump to a value that comfortably fits our 200KB
+  // string limit plus JSON overhead.
+  app.use(json({ limit: '2mb' }));
+  app.use(urlencoded({ limit: '2mb', extended: true }));
 
   app.use(helmet());
   app.setGlobalPrefix('api');
