@@ -33,4 +33,4 @@ COPY --from=builder /app/tsconfig.json ./tsconfig.json
 EXPOSE 3000
 
 # Railway sets $PORT; main.ts reads it via process.env.PORT.
-CMD ["sh", "-c", "npm run migration:run && npm run seed && npm run super-admin && node dist/main"]
+CMD ["sh", "-c", "npm run migration:run && npm run seed && npm run seed:super-admin && node dist/main"]
