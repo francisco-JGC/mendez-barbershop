@@ -46,7 +46,11 @@ export class UsersController {
     return UserResponseDto.fromDomain(created);
   }
 
+  // Sellers need to list users so the POS can offer a barber selector when a
+  // ticket includes a service. The response only exposes fields already in the
+  // JWT surface, so no extra data leaks.
   @Get()
+  @Roles(Role.ADMIN, Role.SELLER)
   async findAll(
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<UserResponseDto[]> {
