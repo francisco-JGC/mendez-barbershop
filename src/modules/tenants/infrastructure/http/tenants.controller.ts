@@ -66,7 +66,7 @@ export class TenantsController {
   // tenant can read their barbershop and the admin can rename it.
   @Get('current')
   @UseGuards(TenantGuard)
-  @Roles(Role.ADMIN, Role.BARBER)
+  @Roles(Role.ADMIN, Role.BARBER, Role.SELLER)
   findCurrent(@CurrentUser() user: AuthenticatedUser) {
     return this.getCurrentBarbershop.execute(user.barbershopId!);
   }

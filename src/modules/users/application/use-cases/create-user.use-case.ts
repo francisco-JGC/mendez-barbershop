@@ -25,9 +25,16 @@ export class CreateUserUseCase {
       throw new ForbiddenException('Cannot create a super_admin user here');
     }
 
-    if (dto.role === Role.BARBER) {
+    // Barbers and sellers log in with a username (short, memorable, no email
+    // account needed). Admins keep email-based identity because they usually
+    // have one and it doubles as their contact method.
+    const usesUsername = dto.role === Role.BARBER || dto.role === Role.SELLER;
+
+    if (usesUsername) {
       if (!dto.username) {
-        throw new BadRequestException('Barbers must have a username');
+        throw new BadRequestException(
+          'Barbers and sellers must have a username',
+        );
       }
       const existing = await this.userRepository.findByUsername(
         barbershopId,
@@ -55,8 +62,8 @@ export class CreateUserUseCase {
     return this.userRepository.create({
       barbershopId,
       name: dto.name,
-      email: dto.role === Role.BARBER ? null : (dto.email ?? null),
-      username: dto.role === Role.BARBER ? (dto.username ?? null) : null,
+      email: usesUsername ? null : (dto.email ?? null),
+      username: usesUsername ? (dto.username ?? null) : null,
       passwordHash,
       role: dto.role,
     });

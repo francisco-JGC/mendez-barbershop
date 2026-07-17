@@ -128,7 +128,7 @@ export class CreateTicketUseCase {
       return currentUser.userId;
     }
 
-    if (currentUser.role !== Role.ADMIN) {
+    if (currentUser.role !== Role.ADMIN && currentUser.role !== Role.SELLER) {
       throw new ForbiddenException('Not allowed to create tickets');
     }
 

@@ -12,19 +12,22 @@ import { UpdateSettingsDto } from '../../application/dto/update-settings.dto';
 
 @Controller('settings')
 @UseGuards(JwtAuthGuard, TenantGuard, RolesGuard)
-@Roles(Role.ADMIN)
 export class SettingsController {
   constructor(
     private readonly getSettings: GetSettingsUseCase,
     private readonly updateSettings: UpdateSettingsUseCase,
   ) {}
 
+  // Sellers need to read settings to render receipts with the correct logo,
+  // footer and printBarbershopName toggle — same behaviour as the web POS.
   @Get()
+  @Roles(Role.ADMIN, Role.SELLER)
   findOne(@CurrentUser() user: AuthenticatedUser) {
     return this.getSettings.execute(user.barbershopId!);
   }
 
   @Patch()
+  @Roles(Role.ADMIN)
   update(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: UpdateSettingsDto,
