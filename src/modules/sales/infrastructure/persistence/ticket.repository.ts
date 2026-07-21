@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { Between, DataSource, Repository } from 'typeorm';
 import {
@@ -45,11 +41,6 @@ export class TicketRepository implements ITicketRepository {
 
         if (!product) {
           throw new NotFoundException(`Product ${item.itemId} not found`);
-        }
-        if (product.stock < item.quantity) {
-          throw new BadRequestException(
-            `Insufficient stock for product ${product.name}`,
-          );
         }
 
         product.stock -= item.quantity;
