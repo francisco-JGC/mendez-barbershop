@@ -36,7 +36,7 @@ export class StationsController {
   }
 
   @Post()
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.SUPERVISOR)
   create(
     @ResolvedTenantId() barbershopId: string,
     @Body() dto: CreateStationDto,
@@ -45,7 +45,7 @@ export class StationsController {
   }
 
   @Patch(':id/assign')
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.SUPERVISOR)
   assign(
     @ResolvedTenantId() barbershopId: string,
     @Param('id') id: string,
@@ -55,7 +55,7 @@ export class StationsController {
   }
 
   @Patch(':id/release')
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.SUPERVISOR)
   release(@ResolvedTenantId() barbershopId: string, @Param('id') id: string) {
     return this.releaseStation.execute(barbershopId, id);
   }

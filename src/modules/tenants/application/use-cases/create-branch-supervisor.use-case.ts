@@ -12,10 +12,10 @@ import { PASSWORD_HASHER } from '../../../users/domain/password-hasher';
 import type { IPasswordHasher } from '../../../users/domain/password-hasher';
 import { User } from '../../../users/domain/user.entity';
 import { Role } from '../../../../common/constants/role.enum';
-import { CreateBarbershopAdminDto } from '../dto/create-barbershop-admin.dto';
+import { CreateBranchSupervisorDto } from '../dto/create-branch-supervisor.dto';
 
 @Injectable()
-export class CreateBarbershopAdminUseCase {
+export class CreateBranchSupervisorUseCase {
   constructor(
     @Inject(BARBERSHOP_REPOSITORY)
     private readonly barbershopRepository: IBarbershopRepository,
@@ -26,43 +26,44 @@ export class CreateBarbershopAdminUseCase {
   ) {}
 
   /**
-   * Creates an admin from the "add admin" button in the branch detail page.
-   * The barbershopId argument is preserved in the API signature for backward
-   * compatibility (and to validate the branch exists), but after Escenario A
-   * the admin itself is *global*: `barbershopId=null`, uniqueness checked
-   * globally, credentials normalized to lowercase. This is the same shape
-   * as an admin created via the plain `POST /users` flow.
+   * Creates a supervisor pinned to [barbershopId]. Called from two places:
+   *   - Inline when a new branch is being created (bootstrapping).
+   *   - From the branch detail page when the admin wants to add another
+   *     supervisor to an existing branch.
+   *
+   * Only admins are allowed to invoke this — enforced at the controller
+   * level via @Roles(Role.ADMIN). Supervisors cannot create peers.
    */
   async execute(
     barbershopId: string,
-    dto: CreateBarbershopAdminDto,
+    dto: CreateBranchSupervisorDto,
   ): Promise<User> {
     const barbershop = await this.barbershopRepository.findById(barbershopId);
     if (!barbershop) {
-      throw new NotFoundException('Barbershop not found');
+      throw new NotFoundException('Sucursal no encontrada');
     }
 
-    const normalizedEmail = dto.email.trim().toLowerCase();
+    const normalizedUsername = dto.username.trim().toLowerCase();
 
-    // Global uniqueness: admins live in a single pool regardless of which
-    // branch page kicked off the "create admin" action.
-    const existing = await this.userRepository.findByEmail(
-      null,
-      normalizedEmail,
+    const existing = await this.userRepository.findByUsername(
+      barbershopId,
+      normalizedUsername,
     );
     if (existing) {
-      throw new ConflictException('Email already in use');
+      throw new ConflictException(
+        'Nombre de usuario ya en uso para esta sucursal',
+      );
     }
 
     const passwordHash = await this.passwordHasher.hash(dto.password);
 
     return this.userRepository.create({
-      barbershopId: null,
+      barbershopId,
       name: dto.name,
-      email: normalizedEmail,
-      username: null,
+      email: null,
+      username: normalizedUsername,
       passwordHash,
-      role: Role.ADMIN,
+      role: Role.SUPERVISOR,
     });
   }
 }

@@ -20,7 +20,7 @@ import type { AuthenticatedUser } from '../../../../common/types/authenticated-u
 import { CreateBarbershopUseCase } from '../../application/use-cases/create-barbershop.use-case';
 import { ListBarbershopsUseCase } from '../../application/use-cases/list-barbershops.use-case';
 import { SetBarbershopActiveUseCase } from '../../application/use-cases/set-barbershop-active.use-case';
-import { CreateBarbershopAdminUseCase } from '../../application/use-cases/create-barbershop-admin.use-case';
+import { CreateBranchSupervisorUseCase } from '../../application/use-cases/create-branch-supervisor.use-case';
 import { UpdateBarbershopUseCase } from '../../application/use-cases/update-barbershop.use-case';
 import { GetCurrentBarbershopUseCase } from '../../application/use-cases/get-current-barbershop.use-case';
 import { LookupBarbershopUseCase } from '../../application/use-cases/lookup-barbershop.use-case';
@@ -31,23 +31,22 @@ import { ResetUserPasswordUseCase } from '../../../users/application/use-cases/r
 import { UpdateUserDto } from '../../../users/application/dto/update-user.dto';
 import { ResetPasswordDto } from '../../../users/application/dto/reset-password.dto';
 import { CreateBarbershopDto } from '../../application/dto/create-barbershop.dto';
-import { CreateBarbershopAdminDto } from '../../application/dto/create-barbershop-admin.dto';
+import { CreateBranchSupervisorDto } from '../../application/dto/create-branch-supervisor.dto';
 import { UpdateBarbershopDto } from '../../application/dto/update-barbershop.dto';
 import { ActiveStatusDto } from '../../../../common/dto/active-status.dto';
 import { UserResponseDto } from '../../../users/application/dto/user-response.dto';
 
 @Controller('tenants')
 @UseGuards(JwtAuthGuard, RolesGuard)
-// After Escenario A there is a single admin role that manages every branch.
-// Branch creation, activation and per-branch admin assignment all live here
-// and are only exposed to that admin.
+// Branch CRUD + supervisor management is admin-only. Supervisors themselves
+// use `POST /users` for barber/seller creation, not these endpoints.
 @Roles(Role.ADMIN)
 export class TenantsController {
   constructor(
     private readonly createBarbershop: CreateBarbershopUseCase,
     private readonly listBarbershops: ListBarbershopsUseCase,
     private readonly setBarbershopActive: SetBarbershopActiveUseCase,
-    private readonly createBarbershopAdmin: CreateBarbershopAdminUseCase,
+    private readonly createBranchSupervisor: CreateBranchSupervisorUseCase,
     private readonly updateBarbershop: UpdateBarbershopUseCase,
     private readonly getCurrentBarbershop: GetCurrentBarbershopUseCase,
     private readonly listUsers: ListUsersUseCase,
@@ -67,13 +66,12 @@ export class TenantsController {
     return this.lookupBarbershop.execute(code);
   }
 
-  // Overrides the class-level ADMIN restriction so any user in the tenant
-  // can read their barbershop. Uses X-Tenant-Code from the header instead of
-  // user.barbershopId because admins don't have a barbershopId — they scope
-  // themselves via the switcher.
+  // Overrides the class-level ADMIN restriction so any user attached to a
+  // branch can read it (supervisor/barber/seller pinned) and admins can
+  // access it via the X-Tenant-Code switcher.
   @Get('current')
   @UseGuards(TenantGuard)
-  @Roles(Role.ADMIN, Role.BARBER, Role.SELLER)
+  @Roles(Role.ADMIN, Role.SUPERVISOR, Role.BARBER, Role.SELLER)
   findCurrent(
     @CurrentUser() user: AuthenticatedUser,
     @TenantId() tenantId: string | null,
@@ -87,7 +85,7 @@ export class TenantsController {
 
   @Patch('current')
   @UseGuards(TenantGuard)
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.SUPERVISOR)
   updateCurrent(
     @CurrentUser() user: AuthenticatedUser,
     @TenantId() tenantId: string | null,
@@ -125,25 +123,31 @@ export class TenantsController {
     return this.setBarbershopActive.execute(id, dto.isActive);
   }
 
-  @Post(':id/admin')
-  async createAdmin(
+  // ── Supervisors of a branch ─────────────────────────────────────────
+  // Admin-only endpoints for CRUD-ing the supervisor accounts of a specific
+  // branch. Supervisors are branch-scoped users (barbershopId set) with the
+  // SUPERVISOR role; they manage the branch's staff and inventory but can't
+  // manage other branches or create peer supervisors.
+
+  @Post(':id/supervisors')
+  async createSupervisor(
     @Param('id') id: string,
-    @Body() dto: CreateBarbershopAdminDto,
+    @Body() dto: CreateBranchSupervisorDto,
   ): Promise<UserResponseDto> {
-    const admin = await this.createBarbershopAdmin.execute(id, dto);
-    return UserResponseDto.fromDomain(admin);
+    const supervisor = await this.createBranchSupervisor.execute(id, dto);
+    return UserResponseDto.fromDomain(supervisor);
   }
 
-  @Get(':id/admins')
-  async listAdmins(@Param('id') id: string): Promise<UserResponseDto[]> {
+  @Get(':id/supervisors')
+  async listSupervisors(@Param('id') id: string): Promise<UserResponseDto[]> {
     const users = await this.listUsers.execute(id);
     return users
-      .filter((u) => u.role === Role.ADMIN)
+      .filter((u) => u.role === Role.SUPERVISOR)
       .map((u) => UserResponseDto.fromDomain(u));
   }
 
-  @Patch(':id/admins/:userId')
-  async updateAdmin(
+  @Patch(':id/supervisors/:userId')
+  async updateSupervisor(
     @Param('id') id: string,
     @Param('userId') userId: string,
     @Body() dto: UpdateUserDto,
@@ -152,8 +156,8 @@ export class TenantsController {
     return UserResponseDto.fromDomain(user);
   }
 
-  @Patch(':id/admins/:userId/active')
-  async setAdminActive(
+  @Patch(':id/supervisors/:userId/active')
+  async setSupervisorActive(
     @Param('id') id: string,
     @Param('userId') userId: string,
     @Body() dto: ActiveStatusDto,
@@ -162,8 +166,8 @@ export class TenantsController {
     return UserResponseDto.fromDomain(user);
   }
 
-  @Patch(':id/admins/:userId/password')
-  async resetAdminPassword(
+  @Patch(':id/supervisors/:userId/password')
+  async resetSupervisorPassword(
     @Param('id') id: string,
     @Param('userId') userId: string,
     @Body() dto: ResetPasswordDto,

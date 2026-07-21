@@ -11,8 +11,10 @@ import { JwtAuthGuard } from '../../../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../../common/guards/roles.guard';
 import { TenantGuard } from '../../../../common/guards/tenant.guard';
 import { Roles } from '../../../../common/decorators/roles.decorator';
+import { CurrentUser } from '../../../../common/decorators/current-user.decorator';
 import { ResolvedTenantId } from '../../../../common/decorators/resolved-tenant-id.decorator';
 import { Role } from '../../../../common/constants/role.enum';
+import type { AuthenticatedUser } from '../../../../common/types/authenticated-user.interface';
 import { ActiveStatusDto } from '../../../../common/dto/active-status.dto';
 import { CreateUserUseCase } from '../../application/use-cases/create-user.use-case';
 import { ListUsersUseCase } from '../../application/use-cases/list-users.use-case';
@@ -26,7 +28,11 @@ import { UserResponseDto } from '../../application/dto/user-response.dto';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard, TenantGuard, RolesGuard)
-@Roles(Role.ADMIN)
+// Both admins and supervisors can manage users of the current branch.
+// Supervisors are additionally restricted at the use-case level: they can
+// only create/update barbers and sellers (never other supervisors or
+// admins).
+@Roles(Role.ADMIN, Role.SUPERVISOR)
 export class UsersController {
   constructor(
     private readonly createUser: CreateUserUseCase,
@@ -38,18 +44,19 @@ export class UsersController {
 
   @Post()
   async create(
+    @CurrentUser() caller: AuthenticatedUser,
     @ResolvedTenantId() barbershopId: string,
     @Body() dto: CreateUserDto,
   ): Promise<UserResponseDto> {
-    const created = await this.createUser.execute(barbershopId, dto);
+    const created = await this.createUser.execute(barbershopId, dto, caller);
     return UserResponseDto.fromDomain(created);
   }
 
   // Sellers need to list users so the POS can offer a barber selector when a
-  // ticket includes a service. The response only exposes fields already in the
-  // JWT surface, so no extra data leaks.
+  // ticket includes a service. The response only exposes fields already in
+  // the JWT surface, so no extra data leaks.
   @Get()
-  @Roles(Role.ADMIN, Role.SELLER)
+  @Roles(Role.ADMIN, Role.SUPERVISOR, Role.SELLER)
   async findAll(
     @ResolvedTenantId() barbershopId: string,
   ): Promise<UserResponseDto[]> {

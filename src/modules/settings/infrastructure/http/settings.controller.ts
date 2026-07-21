@@ -20,13 +20,13 @@ export class SettingsController {
   // Sellers need to read settings to render receipts with the correct logo,
   // footer and printBarbershopName toggle — same behaviour as the web POS.
   @Get()
-  @Roles(Role.ADMIN, Role.SELLER)
+  @Roles(Role.ADMIN, Role.SUPERVISOR, Role.SELLER)
   findOne(@ResolvedTenantId() barbershopId: string) {
     return this.getSettings.execute(barbershopId);
   }
 
   @Patch()
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.SUPERVISOR)
   update(
     @ResolvedTenantId() barbershopId: string,
     @Body() dto: UpdateSettingsDto,

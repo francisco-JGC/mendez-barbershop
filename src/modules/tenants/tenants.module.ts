@@ -9,7 +9,7 @@ import { TenantsController } from './infrastructure/http/tenants.controller';
 import { CreateBarbershopUseCase } from './application/use-cases/create-barbershop.use-case';
 import { ListBarbershopsUseCase } from './application/use-cases/list-barbershops.use-case';
 import { SetBarbershopActiveUseCase } from './application/use-cases/set-barbershop-active.use-case';
-import { CreateBarbershopAdminUseCase } from './application/use-cases/create-barbershop-admin.use-case';
+import { CreateBranchSupervisorUseCase } from './application/use-cases/create-branch-supervisor.use-case';
 import { UpdateBarbershopUseCase } from './application/use-cases/update-barbershop.use-case';
 import { GetCurrentBarbershopUseCase } from './application/use-cases/get-current-barbershop.use-case';
 import { LookupBarbershopUseCase } from './application/use-cases/lookup-barbershop.use-case';
@@ -26,7 +26,7 @@ import { LookupBarbershopUseCase } from './application/use-cases/lookup-barbersh
     CreateBarbershopUseCase,
     ListBarbershopsUseCase,
     SetBarbershopActiveUseCase,
-    CreateBarbershopAdminUseCase,
+    CreateBranchSupervisorUseCase,
     UpdateBarbershopUseCase,
     GetCurrentBarbershopUseCase,
     LookupBarbershopUseCase,

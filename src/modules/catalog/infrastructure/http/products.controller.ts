@@ -44,7 +44,7 @@ export class ProductsController {
   }
 
   @Post()
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.SUPERVISOR)
   create(
     @ResolvedTenantId() barbershopId: string,
     @Body() dto: CreateProductDto,
@@ -53,7 +53,7 @@ export class ProductsController {
   }
 
   @Patch(':id')
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.SUPERVISOR)
   update(
     @ResolvedTenantId() barbershopId: string,
     @Param('id') id: string,

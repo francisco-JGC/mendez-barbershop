@@ -20,7 +20,7 @@ export class DashboardController {
   ) {}
 
   @Get('admin')
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.SUPERVISOR)
   admin(
     @ResolvedTenantId() barbershopId: string,
     @Query() query: DashboardPeriodDto,

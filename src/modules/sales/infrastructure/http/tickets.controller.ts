@@ -14,7 +14,7 @@ import { ListTicketsQueryDto } from '../../application/dto/list-tickets-query.dt
 
 @Controller('tickets')
 @UseGuards(JwtAuthGuard, TenantGuard, RolesGuard)
-@Roles(Role.ADMIN, Role.SELLER)
+@Roles(Role.ADMIN, Role.SUPERVISOR, Role.SELLER)
 export class TicketsController {
   constructor(
     private readonly createTicket: CreateTicketUseCase,

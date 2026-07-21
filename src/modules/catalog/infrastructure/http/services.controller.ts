@@ -34,7 +34,7 @@ export class ServicesController {
   }
 
   @Post()
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.SUPERVISOR)
   create(
     @ResolvedTenantId() barbershopId: string,
     @Body() dto: CreateServiceDto,
@@ -43,7 +43,7 @@ export class ServicesController {
   }
 
   @Patch(':id')
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.SUPERVISOR)
   update(
     @ResolvedTenantId() barbershopId: string,
     @Param('id') id: string,
