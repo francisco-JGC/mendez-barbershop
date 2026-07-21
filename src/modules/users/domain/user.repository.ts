@@ -15,8 +15,14 @@ export interface NewUser {
 export interface IUserRepository {
   findById(id: string): Promise<User | null>;
   findByEmail(barbershopId: string | null, email: string): Promise<User | null>;
-  findByUsername(barbershopId: string | null, username: string): Promise<User | null>;
-  findByIdentifier(barbershopId: string | null, identifier: string): Promise<User | null>;
+  findByUsername(
+    barbershopId: string | null,
+    username: string,
+  ): Promise<User | null>;
+  findByIdentifier(
+    barbershopId: string | null,
+    identifier: string,
+  ): Promise<User | null>;
   findAllByTenant(barbershopId: string): Promise<User[]>;
   create(data: NewUser): Promise<User>;
   save(user: User): Promise<User>;

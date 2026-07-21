@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  ForbiddenException,
   Get,
   Param,
   Patch,
@@ -13,6 +14,7 @@ import { TenantGuard } from '../../../../common/guards/tenant.guard';
 import { Roles } from '../../../../common/decorators/roles.decorator';
 import { Public } from '../../../../common/decorators/public.decorator';
 import { CurrentUser } from '../../../../common/decorators/current-user.decorator';
+import { TenantId } from '../../../../common/decorators/tenant-id.decorator';
 import { Role } from '../../../../common/constants/role.enum';
 import type { AuthenticatedUser } from '../../../../common/types/authenticated-user.interface';
 import { CreateBarbershopUseCase } from '../../application/use-cases/create-barbershop.use-case';
@@ -36,7 +38,10 @@ import { UserResponseDto } from '../../../users/application/dto/user-response.dt
 
 @Controller('tenants')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(Role.SUPER_ADMIN)
+// After Escenario A there is a single admin role that manages every branch.
+// Branch creation, activation and per-branch admin assignment all live here
+// and are only exposed to that admin.
+@Roles(Role.ADMIN)
 export class TenantsController {
   constructor(
     private readonly createBarbershop: CreateBarbershopUseCase,
@@ -62,13 +67,22 @@ export class TenantsController {
     return this.lookupBarbershop.execute(code);
   }
 
-  // Overrides the class-level SUPER_ADMIN restriction so any user in the
-  // tenant can read their barbershop and the admin can rename it.
+  // Overrides the class-level ADMIN restriction so any user in the tenant
+  // can read their barbershop. Uses X-Tenant-Code from the header instead of
+  // user.barbershopId because admins don't have a barbershopId — they scope
+  // themselves via the switcher.
   @Get('current')
   @UseGuards(TenantGuard)
   @Roles(Role.ADMIN, Role.BARBER, Role.SELLER)
-  findCurrent(@CurrentUser() user: AuthenticatedUser) {
-    return this.getCurrentBarbershop.execute(user.barbershopId!);
+  findCurrent(
+    @CurrentUser() user: AuthenticatedUser,
+    @TenantId() tenantId: string | null,
+  ) {
+    const targetId = user.barbershopId ?? tenantId;
+    if (!targetId) {
+      throw new ForbiddenException('No barbershop context');
+    }
+    return this.getCurrentBarbershop.execute(targetId);
   }
 
   @Patch('current')
@@ -76,9 +90,14 @@ export class TenantsController {
   @Roles(Role.ADMIN)
   updateCurrent(
     @CurrentUser() user: AuthenticatedUser,
+    @TenantId() tenantId: string | null,
     @Body() dto: UpdateBarbershopDto,
   ) {
-    return this.updateBarbershop.execute(user.barbershopId!, dto);
+    const targetId = user.barbershopId ?? tenantId;
+    if (!targetId) {
+      throw new ForbiddenException('No barbershop context');
+    }
+    return this.updateBarbershop.execute(targetId, dto);
   }
 
   @Post()

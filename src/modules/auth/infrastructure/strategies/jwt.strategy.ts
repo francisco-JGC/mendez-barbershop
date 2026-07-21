@@ -8,10 +8,15 @@ import { AuthenticatedUser } from '../../../../common/types/authenticated-user.i
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(configService: ConfigService) {
+    // JWT_ACCESS_SECRET is required at boot; startup will fail elsewhere if
+    // it's missing. The `!` is safe because we can't recover from a missing
+    // secret anyway.
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const secret = configService.get<string>('JWT_ACCESS_SECRET')!;
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: configService.get<string>('JWT_ACCESS_SECRET')!,
+      secretOrKey: secret,
     });
   }
 

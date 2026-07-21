@@ -11,9 +11,8 @@ import { JwtAuthGuard } from '../../../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../../common/guards/roles.guard';
 import { TenantGuard } from '../../../../common/guards/tenant.guard';
 import { Roles } from '../../../../common/decorators/roles.decorator';
-import { CurrentUser } from '../../../../common/decorators/current-user.decorator';
+import { ResolvedTenantId } from '../../../../common/decorators/resolved-tenant-id.decorator';
 import { Role } from '../../../../common/constants/role.enum';
-import type { AuthenticatedUser } from '../../../../common/types/authenticated-user.interface';
 import { ActiveStatusDto } from '../../../../common/dto/active-status.dto';
 import { CreateUserUseCase } from '../../application/use-cases/create-user.use-case';
 import { ListUsersUseCase } from '../../application/use-cases/list-users.use-case';
@@ -39,10 +38,10 @@ export class UsersController {
 
   @Post()
   async create(
-    @CurrentUser() user: AuthenticatedUser,
+    @ResolvedTenantId() barbershopId: string,
     @Body() dto: CreateUserDto,
   ): Promise<UserResponseDto> {
-    const created = await this.createUser.execute(user.barbershopId!, dto);
+    const created = await this.createUser.execute(barbershopId, dto);
     return UserResponseDto.fromDomain(created);
   }
 
@@ -52,20 +51,20 @@ export class UsersController {
   @Get()
   @Roles(Role.ADMIN, Role.SELLER)
   async findAll(
-    @CurrentUser() user: AuthenticatedUser,
+    @ResolvedTenantId() barbershopId: string,
   ): Promise<UserResponseDto[]> {
-    const users = await this.listUsers.execute(user.barbershopId!);
+    const users = await this.listUsers.execute(barbershopId);
     return users.map((u) => UserResponseDto.fromDomain(u));
   }
 
   @Patch(':id/active')
   async setActive(
-    @CurrentUser() user: AuthenticatedUser,
+    @ResolvedTenantId() barbershopId: string,
     @Param('id') id: string,
     @Body() dto: ActiveStatusDto,
   ): Promise<UserResponseDto> {
     const updated = await this.setUserActive.execute(
-      user.barbershopId!,
+      barbershopId,
       id,
       dto.isActive,
     );
@@ -74,26 +73,22 @@ export class UsersController {
 
   @Patch(':id')
   async update(
-    @CurrentUser() user: AuthenticatedUser,
+    @ResolvedTenantId() barbershopId: string,
     @Param('id') id: string,
     @Body() dto: UpdateUserDto,
   ): Promise<UserResponseDto> {
-    const updated = await this.updateUser.execute(
-      user.barbershopId!,
-      id,
-      dto,
-    );
+    const updated = await this.updateUser.execute(barbershopId, id, dto);
     return UserResponseDto.fromDomain(updated);
   }
 
   @Patch(':id/password')
   async resetPassword(
-    @CurrentUser() user: AuthenticatedUser,
+    @ResolvedTenantId() barbershopId: string,
     @Param('id') id: string,
     @Body() dto: ResetPasswordDto,
   ): Promise<UserResponseDto> {
     const updated = await this.resetUserPassword.execute(
-      user.barbershopId!,
+      barbershopId,
       id,
       dto.password,
     );

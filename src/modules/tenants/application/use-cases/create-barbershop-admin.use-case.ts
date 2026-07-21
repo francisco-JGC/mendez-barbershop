@@ -25,6 +25,14 @@ export class CreateBarbershopAdminUseCase {
     private readonly passwordHasher: IPasswordHasher,
   ) {}
 
+  /**
+   * Creates an admin from the "add admin" button in the branch detail page.
+   * The barbershopId argument is preserved in the API signature for backward
+   * compatibility (and to validate the branch exists), but after Escenario A
+   * the admin itself is *global*: `barbershopId=null`, uniqueness checked
+   * globally, credentials normalized to lowercase. This is the same shape
+   * as an admin created via the plain `POST /users` flow.
+   */
   async execute(
     barbershopId: string,
     dto: CreateBarbershopAdminDto,
@@ -34,20 +42,24 @@ export class CreateBarbershopAdminUseCase {
       throw new NotFoundException('Barbershop not found');
     }
 
+    const normalizedEmail = dto.email.trim().toLowerCase();
+
+    // Global uniqueness: admins live in a single pool regardless of which
+    // branch page kicked off the "create admin" action.
     const existing = await this.userRepository.findByEmail(
-      barbershopId,
-      dto.email,
+      null,
+      normalizedEmail,
     );
     if (existing) {
-      throw new ConflictException('Email already in use for this tenant');
+      throw new ConflictException('Email already in use');
     }
 
     const passwordHash = await this.passwordHasher.hash(dto.password);
 
     return this.userRepository.create({
-      barbershopId,
+      barbershopId: null,
       name: dto.name,
-      email: dto.email,
+      email: normalizedEmail,
       username: null,
       passwordHash,
       role: Role.ADMIN,

@@ -38,10 +38,11 @@ export class AssignBarberUseCase {
       throw new ConflictException('Station is already occupied');
     }
 
-    const barberCurrentStation = await this.stationRepository.findByCurrentBarberId(
-      barbershopId,
-      barberId,
-    );
+    const barberCurrentStation =
+      await this.stationRepository.findByCurrentBarberId(
+        barbershopId,
+        barberId,
+      );
     if (barberCurrentStation && barberCurrentStation.id !== stationId) {
       throw new ConflictException(
         'This barber is already assigned to another station',

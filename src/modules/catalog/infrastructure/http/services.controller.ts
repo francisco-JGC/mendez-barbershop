@@ -11,9 +11,8 @@ import { JwtAuthGuard } from '../../../../common/guards/jwt-auth.guard';
 import { TenantGuard } from '../../../../common/guards/tenant.guard';
 import { RolesGuard } from '../../../../common/guards/roles.guard';
 import { Roles } from '../../../../common/decorators/roles.decorator';
-import { CurrentUser } from '../../../../common/decorators/current-user.decorator';
+import { ResolvedTenantId } from '../../../../common/decorators/resolved-tenant-id.decorator';
 import { Role } from '../../../../common/constants/role.enum';
-import type { AuthenticatedUser } from '../../../../common/types/authenticated-user.interface';
 import { CreateServiceUseCase } from '../../application/use-cases/create-service.use-case';
 import { ListServicesUseCase } from '../../application/use-cases/list-services.use-case';
 import { UpdateServiceUseCase } from '../../application/use-cases/update-service.use-case';
@@ -30,26 +29,26 @@ export class ServicesController {
   ) {}
 
   @Get()
-  findAll(@CurrentUser() user: AuthenticatedUser) {
-    return this.listServices.execute(user.barbershopId!);
+  findAll(@ResolvedTenantId() barbershopId: string) {
+    return this.listServices.execute(barbershopId);
   }
 
   @Post()
   @Roles(Role.ADMIN)
   create(
-    @CurrentUser() user: AuthenticatedUser,
+    @ResolvedTenantId() barbershopId: string,
     @Body() dto: CreateServiceDto,
   ) {
-    return this.createService.execute(user.barbershopId!, dto);
+    return this.createService.execute(barbershopId, dto);
   }
 
   @Patch(':id')
   @Roles(Role.ADMIN)
   update(
-    @CurrentUser() user: AuthenticatedUser,
+    @ResolvedTenantId() barbershopId: string,
     @Param('id') id: string,
     @Body() dto: UpdateServiceDto,
   ) {
-    return this.updateService.execute(user.barbershopId!, id, dto);
+    return this.updateService.execute(barbershopId, id, dto);
   }
 }

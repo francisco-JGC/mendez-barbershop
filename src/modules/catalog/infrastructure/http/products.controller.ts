@@ -11,9 +11,8 @@ import { JwtAuthGuard } from '../../../../common/guards/jwt-auth.guard';
 import { TenantGuard } from '../../../../common/guards/tenant.guard';
 import { RolesGuard } from '../../../../common/guards/roles.guard';
 import { Roles } from '../../../../common/decorators/roles.decorator';
-import { CurrentUser } from '../../../../common/decorators/current-user.decorator';
+import { ResolvedTenantId } from '../../../../common/decorators/resolved-tenant-id.decorator';
 import { Role } from '../../../../common/constants/role.enum';
-import type { AuthenticatedUser } from '../../../../common/types/authenticated-user.interface';
 import { CreateProductUseCase } from '../../application/use-cases/create-product.use-case';
 import { ListProductsUseCase } from '../../application/use-cases/list-products.use-case';
 import { UpdateProductUseCase } from '../../application/use-cases/update-product.use-case';
@@ -32,34 +31,34 @@ export class ProductsController {
   ) {}
 
   @Get()
-  findAll(@CurrentUser() user: AuthenticatedUser) {
-    return this.listProducts.execute(user.barbershopId!);
+  findAll(@ResolvedTenantId() barbershopId: string) {
+    return this.listProducts.execute(barbershopId);
   }
 
   @Get('by-barcode/:barcode')
   findByBarcode(
-    @CurrentUser() user: AuthenticatedUser,
+    @ResolvedTenantId() barbershopId: string,
     @Param('barcode') barcode: string,
   ) {
-    return this.getProductByBarcode.execute(user.barbershopId!, barcode);
+    return this.getProductByBarcode.execute(barbershopId, barcode);
   }
 
   @Post()
   @Roles(Role.ADMIN)
   create(
-    @CurrentUser() user: AuthenticatedUser,
+    @ResolvedTenantId() barbershopId: string,
     @Body() dto: CreateProductDto,
   ) {
-    return this.createProduct.execute(user.barbershopId!, dto);
+    return this.createProduct.execute(barbershopId, dto);
   }
 
   @Patch(':id')
   @Roles(Role.ADMIN)
   update(
-    @CurrentUser() user: AuthenticatedUser,
+    @ResolvedTenantId() barbershopId: string,
     @Param('id') id: string,
     @Body() dto: UpdateProductDto,
   ) {
-    return this.updateProduct.execute(user.barbershopId!, id, dto);
+    return this.updateProduct.execute(barbershopId, id, dto);
   }
 }

@@ -4,6 +4,7 @@ import { TenantGuard } from '../../../../common/guards/tenant.guard';
 import { RolesGuard } from '../../../../common/guards/roles.guard';
 import { Roles } from '../../../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../../../common/decorators/current-user.decorator';
+import { ResolvedTenantId } from '../../../../common/decorators/resolved-tenant-id.decorator';
 import { Role } from '../../../../common/constants/role.enum';
 import type { AuthenticatedUser } from '../../../../common/types/authenticated-user.interface';
 import { GetAdminDashboardUseCase } from '../../application/use-cases/get-admin-dashboard.use-case';
@@ -21,22 +22,23 @@ export class DashboardController {
   @Get('admin')
   @Roles(Role.ADMIN)
   admin(
-    @CurrentUser() user: AuthenticatedUser,
+    @ResolvedTenantId() barbershopId: string,
     @Query() query: DashboardPeriodDto,
   ) {
-    return this.getAdminDashboard.execute(user.barbershopId!, query.period!);
+    return this.getAdminDashboard.execute(barbershopId, query.period ?? 'day');
   }
 
   @Get('barber')
   @Roles(Role.BARBER)
   barber(
     @CurrentUser() user: AuthenticatedUser,
+    @ResolvedTenantId() barbershopId: string,
     @Query() query: DashboardPeriodDto,
   ) {
     return this.getBarberDashboard.execute(
-      user.barbershopId!,
+      barbershopId,
       user.userId,
-      query.period!,
+      query.period ?? 'day',
     );
   }
 }

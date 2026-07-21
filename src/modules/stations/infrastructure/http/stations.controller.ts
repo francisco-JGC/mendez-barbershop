@@ -11,9 +11,8 @@ import { JwtAuthGuard } from '../../../../common/guards/jwt-auth.guard';
 import { TenantGuard } from '../../../../common/guards/tenant.guard';
 import { RolesGuard } from '../../../../common/guards/roles.guard';
 import { Roles } from '../../../../common/decorators/roles.decorator';
-import { CurrentUser } from '../../../../common/decorators/current-user.decorator';
+import { ResolvedTenantId } from '../../../../common/decorators/resolved-tenant-id.decorator';
 import { Role } from '../../../../common/constants/role.enum';
-import type { AuthenticatedUser } from '../../../../common/types/authenticated-user.interface';
 import { CreateStationUseCase } from '../../application/use-cases/create-station.use-case';
 import { ListStationsUseCase } from '../../application/use-cases/list-stations.use-case';
 import { AssignBarberUseCase } from '../../application/use-cases/assign-barber.use-case';
@@ -32,32 +31,32 @@ export class StationsController {
   ) {}
 
   @Get()
-  findAll(@CurrentUser() user: AuthenticatedUser) {
-    return this.listStations.execute(user.barbershopId!);
+  findAll(@ResolvedTenantId() barbershopId: string) {
+    return this.listStations.execute(barbershopId);
   }
 
   @Post()
   @Roles(Role.ADMIN)
   create(
-    @CurrentUser() user: AuthenticatedUser,
+    @ResolvedTenantId() barbershopId: string,
     @Body() dto: CreateStationDto,
   ) {
-    return this.createStation.execute(user.barbershopId!, dto);
+    return this.createStation.execute(barbershopId, dto);
   }
 
   @Patch(':id/assign')
   @Roles(Role.ADMIN)
   assign(
-    @CurrentUser() user: AuthenticatedUser,
+    @ResolvedTenantId() barbershopId: string,
     @Param('id') id: string,
     @Body() dto: AssignBarberDto,
   ) {
-    return this.assignBarber.execute(user.barbershopId!, id, dto.barberId);
+    return this.assignBarber.execute(barbershopId, id, dto.barberId);
   }
 
   @Patch(':id/release')
   @Roles(Role.ADMIN)
-  release(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
-    return this.releaseStation.execute(user.barbershopId!, id);
+  release(@ResolvedTenantId() barbershopId: string, @Param('id') id: string) {
+    return this.releaseStation.execute(barbershopId, id);
   }
 }

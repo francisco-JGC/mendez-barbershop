@@ -11,7 +11,10 @@ import { UpdateSettingsUseCase } from './application/use-cases/update-settings.u
   imports: [TypeOrmModule.forFeature([BarbershopSettingsOrmEntity])],
   controllers: [SettingsController],
   providers: [
-    { provide: BARBERSHOP_SETTINGS_REPOSITORY, useClass: BarbershopSettingsRepository },
+    {
+      provide: BARBERSHOP_SETTINGS_REPOSITORY,
+      useClass: BarbershopSettingsRepository,
+    },
     GetSettingsUseCase,
     UpdateSettingsUseCase,
   ],

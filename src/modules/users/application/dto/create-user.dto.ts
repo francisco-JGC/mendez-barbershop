@@ -23,7 +23,8 @@ export class CreateUserDto {
   @MinLength(3)
   @MaxLength(32)
   @Matches(/^[a-z0-9._-]+$/, {
-    message: 'username must contain only lowercase letters, numbers, dots, underscores or hyphens',
+    message:
+      'username must contain only lowercase letters, numbers, dots, underscores or hyphens',
   })
   username?: string;
 

@@ -13,67 +13,52 @@ function required(name: string, value: string | undefined): string {
   return value;
 }
 
+// After Escenario A there's a single admin role — the "jefe" — which is a
+// user with barbershopId=null that manages all branches from the header
+// switcher. This script bootstraps that admin plus an initial branch.
 async function run() {
-  const superAdminEmail = required('SUPER_ADMIN_EMAIL', process.env.SUPER_ADMIN_EMAIL);
-  const superAdminPassword = required('SUPER_ADMIN_PASSWORD', process.env.SUPER_ADMIN_PASSWORD);
-  const superAdminName = process.env.SUPER_ADMIN_NAME ?? 'Super Admin';
-
-  const tenantCode = required('ADMIN_TENANT_CODE', process.env.ADMIN_TENANT_CODE).toLowerCase();
-  const tenantName =
-    process.env.ADMIN_TENANT_NAME ?? tenantCode.charAt(0).toUpperCase() + tenantCode.slice(1);
-
   const adminEmail = required('ADMIN_EMAIL', process.env.ADMIN_EMAIL);
   const adminPassword = required('ADMIN_PASSWORD', process.env.ADMIN_PASSWORD);
   const adminName = process.env.ADMIN_NAME ?? 'Admin';
+
+  const tenantCode = required(
+    'ADMIN_TENANT_CODE',
+    process.env.ADMIN_TENANT_CODE,
+  ).toLowerCase();
+  const tenantName =
+    process.env.ADMIN_TENANT_NAME ??
+    tenantCode.charAt(0).toUpperCase() + tenantCode.slice(1);
 
   await AppDataSource.initialize();
   const barbershopRepo = AppDataSource.getRepository(BarbershopOrmEntity);
   const userRepo = AppDataSource.getRepository(UserOrmEntity);
 
-  let superAdmin = await userRepo.findOne({
-    where: { email: superAdminEmail, barbershopId: IsNull() },
-  });
-  if (superAdmin) {
-    console.log(`↷ Super admin already exists: ${superAdminEmail}`);
-  } else {
-    superAdmin = await userRepo.save(
-      userRepo.create({
-        barbershopId: null,
-        name: superAdminName,
-        email: superAdminEmail,
-        passwordHash: await bcrypt.hash(superAdminPassword, 12),
-        role: Role.SUPER_ADMIN,
-      }),
-    );
-    console.log(`✓ Super admin created: ${superAdminEmail}`);
-  }
-
-  let barbershop = await barbershopRepo.findOne({ where: { code: tenantCode } });
-  if (barbershop) {
-    console.log(`↷ Barbershop already exists: "${barbershop.name}" (${tenantCode})`);
-  } else {
-    barbershop = await barbershopRepo.save(
-      barbershopRepo.create({ code: tenantCode, name: tenantName }),
-    );
-    console.log(`✓ Barbershop created: "${barbershop.name}" (${tenantCode})`);
-  }
-
   const existingAdmin = await userRepo.findOne({
-    where: { email: adminEmail, barbershopId: barbershop.id },
+    where: { email: adminEmail, barbershopId: IsNull() },
   });
   if (existingAdmin) {
-    console.log(`↷ Tenant admin already exists: ${adminEmail} @ ${tenantCode}`);
+    console.log(`↷ Admin already exists: ${adminEmail}`);
   } else {
     await userRepo.save(
       userRepo.create({
-        barbershopId: barbershop.id,
+        barbershopId: null,
         name: adminName,
         email: adminEmail,
         passwordHash: await bcrypt.hash(adminPassword, 12),
         role: Role.ADMIN,
       }),
     );
-    console.log(`✓ Tenant admin created: ${adminEmail} @ ${tenantCode}`);
+    console.log(`✓ Admin created: ${adminEmail}`);
+  }
+
+  const barbershop = await barbershopRepo.findOne({ where: { code: tenantCode } });
+  if (barbershop) {
+    console.log(`↷ Barbershop already exists: "${barbershop.name}" (${tenantCode})`);
+  } else {
+    const created = await barbershopRepo.save(
+      barbershopRepo.create({ code: tenantCode, name: tenantName }),
+    );
+    console.log(`✓ Barbershop created: "${created.name}" (${tenantCode})`);
   }
 
   await AppDataSource.destroy();

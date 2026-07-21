@@ -16,7 +16,7 @@ export class CreateProductDto {
   @IsOptional()
   @IsString()
   @MaxLength(64)
-  @Matches(/^[A-Za-z0-9\-]+$/, {
+  @Matches(/^[A-Za-z0-9-]+$/, {
     message: 'barcode must contain only letters, numbers or hyphens',
   })
   barcode?: string;

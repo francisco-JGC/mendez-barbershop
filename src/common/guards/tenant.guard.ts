@@ -17,7 +17,10 @@ export class TenantGuard implements CanActivate {
       return false;
     }
 
-    if (user.role === Role.SUPER_ADMIN) {
+    // Admins are branch-agnostic (no barbershopId): they manage every branch
+    // via the header switcher, so we don't gate them on X-Tenant-Code match.
+    // Barbers and sellers are pinned to their own branch and must match.
+    if (user.role === Role.ADMIN) {
       return true;
     }
 

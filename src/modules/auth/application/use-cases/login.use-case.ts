@@ -24,9 +24,13 @@ export class LoginUseCase {
     tenantId: string | null,
     dto: LoginDto,
   ): Promise<AuthTokensResult> {
+    // Barbers/sellers reported "invalid credentials" when their username was
+    // typed with different casing. Emails and usernames are stored lowercased
+    // by the create-user flow, so we normalize the lookup input to match.
+    const normalizedIdentifier = dto.identifier.trim().toLowerCase();
     const user = await this.userRepository.findByIdentifier(
       tenantId,
-      dto.identifier,
+      normalizedIdentifier,
     );
     if (!user || !user.isActive) {
       throw new UnauthorizedException('Invalid credentials');

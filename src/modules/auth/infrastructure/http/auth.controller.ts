@@ -12,7 +12,7 @@ export class AuthController {
   constructor(
     private readonly loginUseCase: LoginUseCase,
     private readonly refreshTokenUseCase: RefreshTokenUseCase,
-  ) { }
+  ) {}
 
   @Public()
   // @Throttle({ default: { limit: 5, ttl: 60000 } })

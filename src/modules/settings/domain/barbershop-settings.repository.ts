@@ -1,6 +1,8 @@
 import { BarbershopSettings } from './barbershop-settings.entity';
 
-export const BARBERSHOP_SETTINGS_REPOSITORY = Symbol('BARBERSHOP_SETTINGS_REPOSITORY');
+export const BARBERSHOP_SETTINGS_REPOSITORY = Symbol(
+  'BARBERSHOP_SETTINGS_REPOSITORY',
+);
 
 export interface UpdateBarbershopSettings {
   commissionRate?: string;

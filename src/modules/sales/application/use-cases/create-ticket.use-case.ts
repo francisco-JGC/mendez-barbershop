@@ -37,13 +37,17 @@ export class CreateTicketUseCase {
 
   async execute(
     currentUser: AuthenticatedUser,
+    barbershopId: string,
     dto: CreateTicketDto,
   ): Promise<Ticket> {
-    const barbershopId = currentUser.barbershopId!;
     const hasService = dto.items.some(
       (item) => item.itemType === TicketItemType.SERVICE,
     );
-    const barberId = this.resolveBarberId(currentUser, dto.barberId, hasService);
+    const barberId = this.resolveBarberId(
+      currentUser,
+      dto.barberId,
+      hasService,
+    );
 
     const serviceIds = dto.items
       .filter((item) => item.itemType === TicketItemType.SERVICE)

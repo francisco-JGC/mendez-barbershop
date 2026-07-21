@@ -4,6 +4,7 @@ import { TenantGuard } from '../../../../common/guards/tenant.guard';
 import { RolesGuard } from '../../../../common/guards/roles.guard';
 import { Roles } from '../../../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../../../common/decorators/current-user.decorator';
+import { ResolvedTenantId } from '../../../../common/decorators/resolved-tenant-id.decorator';
 import { Role } from '../../../../common/constants/role.enum';
 import type { AuthenticatedUser } from '../../../../common/types/authenticated-user.interface';
 import { CreateTicketUseCase } from '../../application/use-cases/create-ticket.use-case';
@@ -21,15 +22,26 @@ export class TicketsController {
   ) {}
 
   @Post()
-  create(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateTicketDto) {
-    return this.createTicket.execute(user, dto);
+  create(
+    @CurrentUser() user: AuthenticatedUser,
+    @ResolvedTenantId() barbershopId: string,
+    @Body() dto: CreateTicketDto,
+  ) {
+    return this.createTicket.execute(user, barbershopId, dto);
   }
 
   @Get()
   findAll(
     @CurrentUser() user: AuthenticatedUser,
+    @ResolvedTenantId() barbershopId: string,
     @Query() query: ListTicketsQueryDto,
   ) {
-    return this.listTickets.execute(user, query.page, query.limit, query.barberId);
+    return this.listTickets.execute(
+      user,
+      barbershopId,
+      query.page,
+      query.limit,
+      query.barberId,
+    );
   }
 }

@@ -30,9 +30,6 @@ export class UpdateUserUseCase {
     if (!user.barbershopId) {
       throw new ForbiddenException('Cannot modify this user');
     }
-    if (dto.role === Role.SUPER_ADMIN) {
-      throw new ForbiddenException('Cannot assign the super_admin role here');
-    }
 
     // Barbers cannot have an email set, and admins cannot have a username set —
     // rejecting the mismatched fields explicitly is clearer than silently

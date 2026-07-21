@@ -22,7 +22,7 @@ export class TenantMiddleware implements NestMiddleware {
     const code = Array.isArray(header) ? header[0] : header;
 
     if (!code) {
-      // No establishment code sent: super_admin context.
+      // No establishment code sent: admin context (branch-agnostic user).
       req.tenantId = null;
       return next();
     }
