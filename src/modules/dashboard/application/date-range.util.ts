@@ -1,15 +1,41 @@
 export type DashboardPeriod = 'day' | 'yesterday' | 'week' | 'month';
 
-function startOfDay(date: Date): Date {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+// Colombia has no DST — UTC-5 year-round. All date-range math for the
+// dashboard is done in shop-local time so that "today" for the user matches
+// "today" for the query, regardless of whether the server runs in UTC.
+const SHOP_TZ_OFFSET_HOURS = -5;
+const SHOP_TZ_OFFSET_MS = SHOP_TZ_OFFSET_HOURS * 60 * 60 * 1000;
+
+function startOfShopDay(instant: Date): Date {
+  const shifted = new Date(instant.getTime() + SHOP_TZ_OFFSET_MS);
+  const midnightUtc = Date.UTC(
+    shifted.getUTCFullYear(),
+    shifted.getUTCMonth(),
+    shifted.getUTCDate(),
+  );
+  return new Date(midnightUtc - SHOP_TZ_OFFSET_MS);
 }
 
-function startOfWeek(date: Date): Date {
-  const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, ...
+function addDays(date: Date, days: number): Date {
+  return new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
+}
+
+function startOfShopWeek(instant: Date): Date {
+  const startToday = startOfShopDay(instant);
+  const shifted = new Date(startToday.getTime() + SHOP_TZ_OFFSET_MS);
+  const dayOfWeek = shifted.getUTCDay(); // 0=Sunday .. 6=Saturday
   const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-  const start = startOfDay(date);
-  start.setDate(start.getDate() - daysSinceMonday);
-  return start;
+  return addDays(startToday, -daysSinceMonday);
+}
+
+function startOfShopMonth(instant: Date): Date {
+  const shifted = new Date(instant.getTime() + SHOP_TZ_OFFSET_MS);
+  const midnightUtc = Date.UTC(
+    shifted.getUTCFullYear(),
+    shifted.getUTCMonth(),
+    1,
+  );
+  return new Date(midnightUtc - SHOP_TZ_OFFSET_MS);
 }
 
 export function resolveDateRange(period: DashboardPeriod): {
@@ -19,20 +45,17 @@ export function resolveDateRange(period: DashboardPeriod): {
   const now = new Date();
 
   if (period === 'yesterday') {
-    const startOfToday = startOfDay(now);
-    const startOfYesterday = new Date(startOfToday);
-    startOfYesterday.setDate(startOfYesterday.getDate() - 1);
-    return { from: startOfYesterday, to: startOfToday };
+    const startToday = startOfShopDay(now);
+    return { from: addDays(startToday, -1), to: startToday };
   }
 
   if (period === 'week') {
-    return { from: startOfWeek(now), to: now };
+    return { from: startOfShopWeek(now), to: now };
   }
 
   if (period === 'month') {
-    const from = new Date(now.getFullYear(), now.getMonth(), 1);
-    return { from, to: now };
+    return { from: startOfShopMonth(now), to: now };
   }
 
-  return { from: startOfDay(now), to: now };
+  return { from: startOfShopDay(now), to: now };
 }
